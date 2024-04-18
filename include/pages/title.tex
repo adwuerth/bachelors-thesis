@@ -1,0 +1,35 @@
+\begin{titlepage}
+  \centering
+
+  \oTUM{38mm}
+
+  \vspace{5mm}
+  {\huge\MakeUppercase{\getFaculty{}}}\\
+
+  \vspace{5mm}
+  {\large\MakeUppercase{\getUniversity{}}}\\
+
+  \vspace{20mm}
+  {\Large \getDoctype{}}
+
+  \vspace{15mm}
+  {\huge\bfseries \getTitle{}}
+
+  \vspace{10mm}
+  {\huge\bfseries \getTitleGer{}}
+
+  \vspace{10mm}
+  \begin{tabular}{l l}
+    Author: & \getAuthor{} \\
+    Supervisor: & \getSupervisor{} \\
+    Advisor: & \getAdvisor{} \\
+    Submission Date: & \getSubmissionDate{} \\
+    \ifdraft{Version: & \today ~(Draft)\\}{}
+  \end{tabular}
+
+  \IfFileExists{include/logos/faculty.pdf}{%
+    \vfill{}
+    \includegraphics[height=20mm]{include/logos/faculty.pdf}
+  }{}
+\end{titlepage}
+\cleardoublepage{}

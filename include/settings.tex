@@ -1,0 +1,119 @@
+\PassOptionsToPackage{table,svgnames,dvipsnames}{xcolor}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[sc]{mathpazo}
+\usepackage[american]{babel}
+\usepackage[autostyle]{csquotes}
+\usepackage[%
+% backend=biber, % somehow biber did not work properly with latexrun. If you find a solution, feel free to open a merge request
+  backend=bibtex,
+  url=false,
+  style=alphabetic,
+  maxnames=4,
+  minnames=3,
+  maxbibnames=99,
+  giveninits,
+  uniquename=init]{biblatex}
+\usepackage[final]{graphicx}
+\usepackage{xcolor}
+\usepackage{textcomp}
+\usepackage{scrhack} % necessary for listings package
+\usepackage[final]{listings}
+\usepackage{lstautogobble}
+\usepackage{tikz}
+\usepackage{booktabs}
+\usepackage[labelfont=bf]{caption}
+\usepackage[final]{microtype}
+\usepackage[final, hidelinks, pdfusetitle]{hyperref} % hidelinks removes colored boxes around references and links
+
+\hypersetup{
+pdftitle={\getTitle},
+pdfsubject={\getDoctype},
+pdfauthor={\getAuthor},
+pdfkeywords={}
+}
+
+\usepackage{float}
+\usepackage{algorithm}
+\usepackage[noend]{algpseudocode}
+
+\newcommand{\imagePath}[1]{figures/#1}
+
+\bibliography{bibliography}
+
+\setkomafont{disposition}{\normalfont\bfseries} % use serif font for headings
+\linespread{1.05} % adjust line spread for mathpazo font
+
+% TUM Colors
+\definecolor{TUMblue}{RGB}{0,101,189} % TUMBlau
+
+% 150 Years
+\definecolor{TUMgreen}{RGB}{161,191,22} % Gruen
+\definecolor{TUMpink}{RGB}{227,130,143} % Rosa
+\definecolor{TUMorange}{RGB}{243,145,0} % Orange
+\definecolor{TUMbrown}{RGB}{202,171,41} % Senf
+\definecolor{TUMblueLight}{RGB}{91,197,242}  % Hellblau
+
+% 150 Years (Light)
+\definecolor{TUMlightGreen}{RGB}{188,207,30} % Gruen
+\definecolor{TUMlightPink}{RGB}{242,144,149} % Rosa
+\definecolor{TUMlightOrange}{RGB}{247,166,0} % Orange
+\definecolor{TUMlightBrown}{RGB}{232,200,55} % Senf
+\definecolor{TUMlightBlueLight}{RGB}{146,212,241} % Hellblau
+
+% Settings for algorithm
+\algnewcommand\algorithmicforeach{\textbf{for each}}
+\algdef{S}[FOR]{ForEach}[1]{\algorithmicforeach\ #1\ \algorithmicdo}
+
+% Settings for lstlistings
+\lstset{%
+  basicstyle=\ttfamily,
+  columns=fullflexible,
+  autogobble,
+  keywordstyle=\bfseries\color{MediumBlue},
+  stringstyle=\color{DarkGreen}
+}
+
+\usepackage{amsmath}
+
+% Define auto scale
+\makeatletter
+\def\ScaleIfNeeded{%
+  \ifdim\Gin@nat@width>\textwidth
+\textwidth
+\else
+\Gin@nat@width
+\fi
+}
+\makeatother
+
+% If Draft 
+\usepackage{ifdraft}
+
+% Show labels in draft
+\usepackage[inline]{showlabels}
+\ifdraft{
+	\showlabels[\color{TUMblue}]{cite}
+	\showlabels[\color{TUMorange}]{ref}
+}{}
+
+\usepackage{showkeys}
+
+% Draft Footer 
+\ifdraft{
+	\usepackage[draft=false]{scrlayer-scrpage} % Use this as final to avoid rulers
+	\cfoot*{Draft Version (\today)}
+}{}
+
+% FixMe Notes and Warnings
+\usepackage{fixme}
+\fxsetup{theme=color,author=}
+
+% Chapter Symbols for progress
+\def\draftEmpty{\rlap{\protect\makebox[-3cm]{\color{red}$\circ$}}}
+\def\draftProgress{\rlap{\protect\makebox[-3cm]{\color{yellow}$\circ$}}}
+\def\draftDone{\rlap{\protect\makebox[-3cm]{\color{green}$\circ$}}}
+
+% TUM Logo
+\input{include/tum.sty}

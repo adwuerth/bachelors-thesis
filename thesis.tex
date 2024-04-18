@@ -1,0 +1,71 @@
+%       \\\ ///      %
+%       ( @ @ )      %
+% ---o00o.(_).o00o---%
+%  Maximilian Bandle %
+%  bandle@in.tum.de  %
+%  Thesis Template   %
+% -------------------%
+\documentclass[draft,headsepline,footsepline,footinclude=false,fontsize=11pt,paper=a4,listof=totoc,bibliography=totoc,BCOR=12mm,DIV=15]{scrbook} % two-sided
+%\documentclass[headsepline,footsepline,footinclude=false,oneside,fontsize=11pt,paper=a4,listof=totoc,bibliography=totoc]{scrbook} % one-sided
+
+\newcommand*{\getUniversity}{Technische Universität München}
+\newcommand*{\getFaculty}{Department of Informatics}
+% Insert your title here
+\newcommand*{\getTitle}{My awesome thesis}
+\newcommand*{\getTitleGer}{Meine tolle Arbeit}
+% Insert your name here
+\newcommand*{\getAuthor}{Your Name}
+% Type of the document
+\newcommand*{\getDoctype}{Master's Thesis in Informatics}
+% Choose your supervisor
+%\newcommand*{\getSupervisor}{Prof. Alfons Kemper, Ph.D.}
+%\newcommand*{\getSupervisor}{Prof. Dr. Thomas Neumann}
+\newcommand*{\getSupervisor}{Prof. Dr. Jana Giceva}
+% Insert your Advisor
+\newcommand*{\getAdvisor}{Maximilian Bandle, M.Sc.}
+% Official submission date
+\newcommand*{\getSubmissionDate}{Month 15, 20YY}
+\newcommand*{\getSubmissionLocation}{Munich}
+
+\input{include/settings}
+
+\begin{document}
+
+% Set page numbering to avoid  "destination with the same identifier has been already used" warning for cover page.
+% (see https://en.wikibooks.org/wiki/LaTeX/Hyperlinks#Problems_with_Links_and_Pages).
+\pagenumbering{alph}
+\input{include/pages/cover}
+
+\frontmatter{}
+
+\input{include/pages/title}
+\input{include/pages/disclaimer}
+\input{include/pages/acknowledgements}
+\input{include/pages/abstract}
+\microtypesetup{protrusion=false}
+\tableofcontents{}
+\listoffixmes{}
+\microtypesetup{protrusion=true}
+\mainmatter{}
+
+\input{chapters/01_introduction}
+\input{chapters/02_basics}
+\input{chapters/03_implementation}
+\input{chapters/04_evaluation}
+\input{chapters/05_discussion}
+\input{chapters/06_conclusions}
+
+%\appendix{}
+%\input{chapters/appendix}
+\microtypesetup{protrusion=false}
+
+\listoffigures{}
+\listoftables{}
+\lstlistoflistings{}
+
+\microtypesetup{protrusion=true}
+
+% Bibliographie Test
+\printbibliography{}
+
+\end{document}
