@@ -11,7 +11,9 @@
   \oTUM{38mm}
 
   \vspace{5mm}
-  {\huge\MakeUppercase{\getFaculty{}}}\\
+  \begin{spacing}{1.5}
+    {\huge\MakeUppercase{\getFaculty{}}}\\
+  \end{spacing}
 
   \vspace{5mm}
   {\large\MakeUppercase{\getUniversity{}}}\\
@@ -25,8 +27,8 @@
   \vspace{15mm}
   {\LARGE \getAuthor{}}
 
-    \ifdraft{Draft (\today)}{}
-    
+  \ifdraft{Draft (\today)}{}
+
   \IfFileExists{include/logos/faculty.pdf}{%
     \vspace{20mm}
     \includegraphics[height=20mm]{include/logos/faculty.pdf}

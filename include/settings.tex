@@ -6,7 +6,7 @@
 \usepackage[american]{babel}
 \usepackage[autostyle]{csquotes}
 \usepackage[%
-% backend=biber, % somehow biber did not work properly with latexrun. If you find a solution, feel free to open a merge request
+  % backend=biber, % somehow biber did not work properly with latexrun. If you find a solution, feel free to open a merge request
   backend=bibtex,
   url=false,
   style=alphabetic,
@@ -27,11 +27,13 @@
 \usepackage[final]{microtype}
 \usepackage[final, hidelinks, pdfusetitle]{hyperref} % hidelinks removes colored boxes around references and links
 
+\usepackage{setspace}
+
 \hypersetup{
-pdftitle={\getTitle},
-pdfsubject={\getDoctype},
-pdfauthor={\getAuthor},
-pdfkeywords={}
+  pdftitle={\getTitle},
+  pdfsubject={\getDoctype},
+  pdfauthor={\getAuthor},
+  pdfkeywords={}
 }
 
 \usepackage{float}
@@ -81,10 +83,10 @@ pdfkeywords={}
 \makeatletter
 \def\ScaleIfNeeded{%
   \ifdim\Gin@nat@width>\textwidth
-\textwidth
-\else
-\Gin@nat@width
-\fi
+    \textwidth
+  \else
+    \Gin@nat@width
+  \fi
 }
 \makeatother
 
@@ -94,16 +96,16 @@ pdfkeywords={}
 % Show labels in draft
 \usepackage[inline]{showlabels}
 \ifdraft{
-	\showlabels[\color{TUMblue}]{cite}
-	\showlabels[\color{TUMorange}]{ref}
+  \showlabels[\color{TUMblue}]{cite}
+  \showlabels[\color{TUMorange}]{ref}
 }{}
 
 \usepackage{showkeys}
 
 % Draft Footer 
 \ifdraft{
-	\usepackage[draft=false]{scrlayer-scrpage} % Use this as final to avoid rulers
-	\cfoot*{Draft Version (\today)}
+  \usepackage[draft=false]{scrlayer-scrpage} % Use this as final to avoid rulers
+  \cfoot*{Draft Version (\today)}
 }{}
 
 % FixMe Notes and Warnings
