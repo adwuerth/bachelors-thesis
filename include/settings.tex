@@ -26,8 +26,10 @@
 \usepackage[labelfont=bf]{caption}
 \usepackage[final]{microtype}
 \usepackage[final, hidelinks, pdfusetitle]{hyperref} % hidelinks removes colored boxes around references and links
+\usepackage{multirow}
 
 \usepackage{setspace}
+\usepackage{subcaption}
 
 \hypersetup{
   pdftitle={\getTitle},
@@ -90,23 +92,23 @@
 }
 \makeatother
 
-% If Draft 
-\usepackage{ifdraft}
+% % If Draft 
+% \usepackage{ifdraft}
 
-% Show labels in draft
-\usepackage[inline]{showlabels}
-\ifdraft{
-  \showlabels[\color{TUMblue}]{cite}
-  \showlabels[\color{TUMorange}]{ref}
-}{}
+% % Show labels in draft
+% \usepackage[inline]{showlabels}
+% \ifdraft{
+%   \showlabels[\color{TUMblue}]{cite}
+%   \showlabels[\color{TUMorange}]{ref}
+% }{}
 
-\usepackage{showkeys}
+% \usepackage{showkeys}
 
-% Draft Footer 
-\ifdraft{
-  \usepackage[draft=false]{scrlayer-scrpage} % Use this as final to avoid rulers
-  \cfoot*{Draft Version (\today)}
-}{}
+% % Draft Footer 
+% \ifdraft{
+%   \usepackage[draft=false]{scrlayer-scrpage} % Use this as final to avoid rulers
+%   \cfoot*{Draft Version (\today)}
+% }{}
 
 % FixMe Notes and Warnings
 \usepackage{fixme}
