@@ -51,7 +51,7 @@
             %	label style={font=\fontsize{8}{9}\selectfont},
             every axis legend/.append style={nodes={right}},
             % legend entries={\texttt{io\_uring}, \texttt{libaio}, \texttt{psync}, vroom, SPDK},
-            legend entries={SPDK, vroom, \texttt{io\_uring}, \texttt{libaio}, \texttt{psync}, vroom mmio, vroom vfio},
+            legend entries={SPDK, vroom, \texttt{io\_uring}, \texttt{libaio}, \texttt{psync}, vroom mmio, vroom vfio, tuomas mmio, tuomas vfio},
             legend pos = north east,
             legend style={at={(0.99,0.99)}, anchor = north east},
             legend columns = 1,
@@ -65,6 +65,10 @@
 
         \addplot [mark=none,color=TUMYellow, thick] table[col sep=comma,x=latency,y expr=1-\thisrow{cdf}] {data/vroom-mmio-write-cdf.csv};
         \addplot [mark=none,color=TUMTurquois, thick] table[col sep=comma,x=latency,y expr=1-\thisrow{cdf}] {data/vroom-vfio-write-cdf.csv};
+
+
+        \addplot [mark=none,color=TUMPurple, thick] table[col sep=comma,x=latency,y expr=1-\thisrow{cdf}] {data/vroom-tuomas-mmio-write-cdf.csv};
+        \addplot [mark=none,color=TUMRed, thick] table[col sep=comma,x=latency,y expr=1-\thisrow{cdf}] {data/vroom-tuomas-vfio-write-cdf.csv};
 
         \addplot[mark=none,color=black!60,forget plot,dashed,thick] coordinates {
                 (0,0.1)
