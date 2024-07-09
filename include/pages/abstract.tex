@@ -1,10 +1,9 @@
 \chapter{Abstract}
 
-We present a framework for students to bootstrap your final thesis. The primary goal of this template is to improve the quality of the thesis by avoiding typical mistakes. Our framework focuses on the basic thesis structure, which is mostly applicable, and helps you to immediately start writing. The first step is that the student writes down what he did so far, and performs some changes to this structure, yielding a thesis with notes and a rough plan how to write it up. The second step is to transform your notes into sentences, yielding a first draft. A template is the first step to the final thesis. In contrast to writing a thesis from scratch, our approach gives you a scaffold and helps you focusing on the important parts. We also show how to plot your data and describe your experiments. We present experimental results showing the perfect final thesis in the end.
-
-As you might already have noticed, the abstract is the first, and sometimes only part the reader notices.
-Thus it's crucial to summarize your work while motivating the reader here.
-To help you with formulating we provide a basic structure to just fill the gaps.
-Afterward, you can and should reformulate it to add your personal touch to it.
-
-    [...] present [...] for [...] to [...]. The primary goal of [...] is to improve [...] by avoiding [...] . Our framework focuses on [...], which is [...] , and is [...]. The first [...] , and performs [...], yielding [...]. The second [...] where [...], and yields [...]. [...] is the first [...]. In contrast [...], our approach [...]. We also show how [...]. We present experimental results showing [...].
+The research into direct memory access in the userspace has increased over the latest years especially in the field of virtualization.
+The main reason for this is the need for high performance and low latency in virtualized environments.
+The hardware that enables this is called the IOMMU. Through the IOMMU, the guest operating system can directly access the hardware without the need for the hypervisor to intervene.
+This technology is not bound to only virtualization, but can also be used for high-performance drivers.
+In the past, the IOMMU was only accessible through the kernel, but with the introduction of the \textit{Intel VT-d} and \textit{AMD-Vi} extensions, the IOMMU can now be accessed from the userspace.
+The VFIO framework and the IOMMUFD user API build the foundation for this.
+We aim to achieve the same performance and low latency as directly mapping the hardware into the guest operating system, while increasing the security of the system.

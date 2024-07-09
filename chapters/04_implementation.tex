@@ -1,3 +1,12 @@
 \chapter{Implementation}
 
 \section{VFIO}
+\subsection{Mapping DMA}
+\subsection{Regions}
+\subsection{Groups}
+\section{IOMMUFD}
+IOMMUFD has only been recently added to the Linux Kernel. E.g. Debian 12 does not support it.
+\subsection{CDev}
+The device file descriptor, which was previously attained with \texttt{VFIO\_GROUP\_GET\_DEVICE\_FD} can now easily be opened under the path /dev/vfio/devices/vfioX.
+
+\subsection{IOAS}

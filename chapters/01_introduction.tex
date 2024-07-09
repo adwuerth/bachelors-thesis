@@ -1,48 +1,9 @@
-\chapter{Introduction}\label{chapter:introduction}
+\chapter{Introduction}\label{c:introduction}
 
-First, a disclaimer: This document is only a template and an advice. It is not binding!
-You are completely free to ignore all the advice given (if you have a reason)\footnote{This holds for all sections.}.
-
-The introduction motivates the reader and shows the importance of the topic.
-Thus it does not have to be as technical as the remainder of the thesis.
-A common method it to briefly outline the development of the topic with a time frame.
-One figure with some time data or other plot helps to catch the attention more easily.
-It is more general and motivates that a topic in this field is interesting to consider.
-
-This chapter contains the following:
-\begin{itemize}
-  \item Show importance of the topic (e.g. with time frame)
-  \item Motivate the topic (e.g. by a knowledge gap or a controversy)
-  \item State the focus and aim of the thesis.
-  \item Explain some keyword and show the related work if its short
-  \item Outline the structure of the remainder
-\end{itemize}
-
-\section{Motivation}\label{chapter:motivation}
-This section motivates why you did the thesis.
-For example there was a knowledge gap before or the sources cannot agree on one opinion.
-Afterward, it has to be clear why and what you are doing in the thesis.
-This gives the reader an impression of what to expect in this thesis.
-
-In the end you may anticipate the end of the thesis and show a brief before, after comparison -- maybe also using a figure.
-However, keep in mind that the reader may not know all technicalities yet. So it has to be as precise as possible without overusing terminologies.
-
-\section{State of the Art}\label{chapter:stateoftheart}
-
-This section is optional depending on how much related work you have to cover.
-If it's little or very much this section may be helpful.
-
-\paragraph{Little related work} You can describe all your related work here and give an overview how the topic evolved.
-You should end in the current state of art and give the reader some insights in the field to compare your work to the work already done by others.
-
-\paragraph{More related work} This section gives a really brief comparing summary of the related work.
-It should only consist of a comparison of the most important approaches and the most important developments the reader needs to understand the topic.
-You should finally forward reference to your related work section.
-
-For both cases its beneficial to introduce terminology here and introduce the reader into your subject.
-
-\section{Structure}\label{c:i:s}
-
-Here you can give an outline over the remainder of the thesis to give a jump table for the reader to see which are the most interesting chapters to read.
-
-\cite{networkx}
+The IOMMU was first implemented as a way to increase address space for 32-bit devices.
+After almost every device was using 64-bit addresses, the IOMMUs purpose shifted to providing a layer of isolation between devices and the CPU. \cite{OLS2007}
+The isolation layer prevents devices from accessing memory that they are not allowed to access.
+An additional benefit of the IOMMU is that root privileges are not needed to access memory.
+We demonstrate the effects of using the IOMMU by implementing it on the NVMe driver vroom. \cite{vroom}
+We use Rust to implement the driver and the userspace application as it offers high performance and memory safety without garbage collection.
+The IOMMU used in this thesis is an Intel IOMMU using the VT-d extension.
