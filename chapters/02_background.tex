@@ -1,17 +1,25 @@
 \chapter{Background}
 
 \section{vroom}
-vroom currently uses hugepages and locks them using mlock to prevent the Kernel from swapping them out. This only enables the use of 2MiB hugepages and up, which can be disadvantageous for certain applications that would benefit from smaller page sizes.
-By using the IOMMU, this way of handling memory becomes redundant, as the IOMMU often supports smaller page sizes.
+vroom currently uses hugepages and locks them using mlock to prevent the Kernel from swapping them out. 
+This only enables the use of 2MiB hugepages, which can be disadvantageous for certain applications that would benefit from smaller page sizes.
+A NVMe driver consists of submission and completion queues, implemented as ring buffers. 
+The driver adds commands to the submission queue, which the NVMe controller reads and executes. 
+The executed command gets placed on a corresponding completion queue.
+For accessing the devices memory as well as the device accessing the host memory, it is necessary to either use the physical addresses and compromise on safety and use root privileges or use the IOMMU for virtualization, which can introduce performance overhead. 
 
 \section{IOMMU}
 The IOMMU works similarly to the MMU in the CPU, mapping physical addresses to virtual addresses.
-The IOMMU does this by performing page table walks, through which a physcial address is translated to a virtual address.
+The IOMMU does this by performing page table walks, through which a physical address is translated to a virtual address.
 To improve performance on the IOMMU, an IOTLB is used to cache translations.
 
+\section{IOTLB}
+As page table walks are rather costly in performance, a cache on the IOMMU is used to store previously calculated addresses. This cache is called the Input/Output Translation Lookaside Buffer. The IOTLB possesses a limited capacity for entries. 
+
 \section{VFIO}
-VFIO is a framework that enables the use of the IOMMU from userspace.
+VFIO is an IOMMU agnostic framework for exposing devices to userspace. 
+This allows the driver to be safe and non-privileged in comparison to directly mapping the device memory to userspace. 
 
 \section{IOMMUFD}
-IOMMUFD is a user API for exposing DMA to userspace. It allows management of I/O address spaces (IOAS), enabling mapping/unmapping user space memory on the IOMMU.
-It can be used in combination with VFIO to provide a more user-friendly interface.
+IOMMUFD is a user API for exposing DMA to userspace. 
+It allows management of I/O address spaces (IOAS), enabling mapping/unmapping user space memory on the IOMMU.
