@@ -1,25 +1,32 @@
 \chapter{Background}
 
 \section{vroom}
-vroom currently uses hugepages and locks them using mlock to prevent the Kernel from swapping them out. 
+vroom currently uses hugepages and locks them using mlock to prevent the Kernel from swapping them out.
 This only enables the use of 2MiB hugepages, which can be disadvantageous for certain applications that would benefit from smaller page sizes.
-A NVMe driver consists of submission and completion queues, implemented as ring buffers. 
-The driver adds commands to the submission queue, which the NVMe controller reads and executes. 
+A NVMe driver consists of submission and completion queues, implemented as ring buffers.
+The driver adds commands to the submission queue, which the NVMe controller reads and executes.
 The executed command gets placed on a corresponding completion queue.
-For accessing the devices memory as well as the device accessing the host memory, it is necessary to either use the physical addresses and compromise on safety and use root privileges or use the IOMMU for virtualization, which can introduce performance overhead. 
+For accessing the devices memory as well as the device accessing the host memory, it is necessary to either use the physical addresses and compromise on safety and use root privileges or use the IOMMU for virtualization, which can introduce performance overhead.
 
-\section{IOMMU}
+\section{I/O Memory Management Unit}
 The IOMMU works similarly to the MMU in the CPU, mapping physical addresses to virtual addresses.
+Using DMA Remapping (DMAR) the CPUs MMU is bypassed and the DMA request is handled by the IOMMU.
 The IOMMU does this by performing page table walks, through which a physical address is translated to a virtual address.
 To improve performance on the IOMMU, an IOTLB is used to cache translations.
 
-\section{IOTLB}
-As page table walks are rather costly in performance, a cache on the IOMMU is used to store previously calculated addresses. This cache is called the Input/Output Translation Lookaside Buffer. The IOTLB possesses a limited capacity for entries. 
+\section{I/O Translation Lookaside Buffer}
+As page table walks are rather costly in performance, a cache on the IOMMU is used to store previously calculated addresses. This cache is called the Input/Output Translation Lookaside Buffer. The IOTLB possesses a limited capacity for entries which is not officially documented.
 
-\section{VFIO}
-VFIO is an IOMMU agnostic framework for exposing devices to userspace. 
-This allows the driver to be safe and non-privileged in comparison to directly mapping the device memory to userspace. 
+\section{Virtual Function I/O}
+VFIO is an IOMMU agnostic framework for exposing devices to userspace.
+This allows the driver to be safe and non-privileged in comparison to directly mapping the device memory to userspace.
+Using the VFIO works by using ioctl system calls.
 
 \section{IOMMUFD}
-IOMMUFD is a user API for exposing DMA to userspace. 
+IOMMUFD is a user API for exposing DMA to userspace.
 It allows management of I/O address spaces (IOAS), enabling mapping/unmapping user space memory on the IOMMU.
+
+\subsection{Character and Block Devices}
+Unix/Linux use two types of devices: Character and Block devices. Character devices are used for devices with small amounts of data and no frequent seek queries, like keyboard and mouse. Block devices on the other hand have a large data volumes, which are organized in blocks and where search is common, like hardddrives and ram disks.
+Read and Write operations on character devices are done sequentially byte-by-byte, while on block devices, read/write is done at the data block level.
+These constraints also impact how the drivers for these devices work. CDev drivers directly communicate with the device drivers, while block device drivers work in conjunction with the kernel file management and block device subsystem. This allows efficient asynchronous read/write operations for large data amounts, but small byte sized data transfer achieves lower latency on character devices.

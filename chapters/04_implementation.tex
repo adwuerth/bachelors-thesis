@@ -1,12 +1,19 @@
 \chapter{Implementation}
 
 \section{VFIO}
+\subsection{Initialising the IOMMU}
+\subsection{Enabling DMA}
 \subsection{Mapping DMA}
+In order to provide a section of memory on which the device can perform DMA operations, the user needs to allocate some memory in the processes address space. This is done by using mmap. Using mmap's flags we can also define the page size used. The MAP\_HUGETLB is used in conjunction with the MAP\_HUGE\_2MB and MAP\_HUGE\_1GB flags for 2MiB and 1 GiB pages respectively. By default mmap uses the default page size of 4KiB.
+The main IOMMU work is done by then creating the map struct vfio\_iommu\_type1\_dma\_map. We set the DMA mapping to read and write, and provide the same IOVA as the Virtual address. By then passing it to an ioctl call with the according VFIO operation VFIO\_IOMMU\_MAP\_DMA we can create a mapping in the page tables of the IOMMU.
+This way we can give the IOVA to the NVMe controller, which it will use to access the memory through the address translation of the IOMMU.
 \subsection{Regions}
+Using regions, we can directly mmap device memory into host memory for easy access to the NVMe controller.
 \subsection{Groups}
+\subsection{Containers}
 \section{IOMMUFD}
-IOMMUFD has only been recently added to the Linux Kernel. E.g. Debian 12 does not support it.
-\subsection{CDev}
-The device file descriptor, which was previously attained with \texttt{VFIO\_GROUP\_GET\_DEVICE\_FD} can now easily be opened under the path /dev/vfio/devices/vfioX.
+IOMMUFD has only been recently added to the Linux Kernel. E.g. Debian 12 does not support it. In our driver we offer both options of using the IOMMU.
+The device file descriptor, which was previously attained with \texttt{VFIO\_GROUP\_GET\_DEVICE\_FD} can now be gotten through opening the character device /dev/vfio/devices/vfioX.
+By using this character device pointer
 
 \subsection{IOAS}
