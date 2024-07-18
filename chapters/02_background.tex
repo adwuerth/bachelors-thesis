@@ -7,6 +7,7 @@ A NVMe driver consists of submission and completion queues, implemented as ring 
 The driver adds commands to the submission queue, which the NVMe controller reads and executes.
 The executed command gets placed on a corresponding completion queue.
 For accessing the devices memory as well as the device accessing the host memory, it is necessary to either use the physical addresses and compromise on safety and use root privileges or use the IOMMU for virtualization, which can introduce performance overhead.
+We unbind the kernel driver and bind it to pci-stub. Pci-stub does not do anything but occupy the Pci-driver such that the kernel or another application can not bind to the device.
 
 \section{I/O Memory Management Unit}
 The IOMMU works similarly to the MMU in the CPU, mapping physical addresses to virtual addresses.

@@ -1,19 +1,32 @@
 \chapter{Implementation}
 
 \section{VFIO}
+
 \subsection{Initialising the IOMMU}
+
 \subsection{Enabling DMA}
+
 \subsection{Mapping DMA}
 In order to provide a section of memory on which the device can perform DMA operations, the user needs to allocate some memory in the processes address space. This is done by using mmap. Using mmap's flags we can also define the page size used. The MAP\_HUGETLB is used in conjunction with the MAP\_HUGE\_2MB and MAP\_HUGE\_1GB flags for 2MiB and 1 GiB pages respectively. By default mmap uses the default page size of 4KiB.
-The main IOMMU work is done by then creating the map struct vfio\_iommu\_type1\_dma\_map. We set the DMA mapping to read and write, and provide the same IOVA as the Virtual address. By then passing it to an ioctl call with the according VFIO operation VFIO\_IOMMU\_MAP\_DMA we can create a mapping in the page tables of the IOMMU.
-This way we can give the IOVA to the NVMe controller, which it will use to access the memory through the address translation of the IOMMU.
+The main IOMMU work is done by then creating the map struct vfio\_iommu\_type1\_dma\_map. We set the DMA mapping to read and write, and provide the same IOVA as the Virtual address. By then passing it to an ioctl call with the according VFIO operation VFIO\_IOMMU\_MAP\_DMA we can create a mapping in the page tables of the IOMMU. This way we can give the IOVA to the NVMe controller, which it will use to access the memory through the address translation of the IOMMU.
+
+\subsection{Unmapping DMA}
+Unmapping DMA happens when the process exits, yet for performance and application reasons there is the unmap\_dma function which can be used to unmap a DMA.
+
 \subsection{Regions}
 Using regions, we can directly mmap device memory into host memory for easy access to the NVMe controller.
+
 \subsection{Groups}
+VFIO uses group to distinguish between groups of devices which can be isolated from the host system. In the ideal case, every device would only be part of one group in order to increase security by providing single-device isolation. Groups are the smallest unit size on a system to ensure secure user access.
+
 \subsection{Containers}
+To further reduce overhead from the IOMMU Containers are used in VFIO, which can hold multiple groups. These containers can be used to ease translation and reduce TLB page faults.
+In our implementation we use one group and container each for our NVMe device.
+
 \section{IOMMUFD}
 IOMMUFD has only been recently added to the Linux Kernel. E.g. Debian 12 does not support it. In our driver we offer both options of using the IOMMU.
 The device file descriptor, which was previously attained with \texttt{VFIO\_GROUP\_GET\_DEVICE\_FD} can now be gotten through opening the character device /dev/vfio/devices/vfioX.
-By using this character device pointer
+By using this character device pointer we can claim the ownership over the VFIO device. That way VFIO does not rely on group/container/iommu drivers.
+As IOMMUFD is not widely used yet, we conducted the evaluation with the legacy VFIO group interface. The performance should not differ, as the hardware is the bottleneck during I/O operations.
 
 \subsection{IOAS}
