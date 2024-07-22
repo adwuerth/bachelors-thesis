@@ -24,7 +24,6 @@
     }
 }
 
-
 \begin{document}
 %\pgfplotsset{
 %    every non boxed x axis/.style={} 
@@ -36,7 +35,7 @@
             set layers,
             width=20.2cm,
             height=6.4cm,
-            xmin=0, xmax=200,
+            xmin=0, xmax=30,
             ymin=0.000004, ymax=1,
             ymode=log,
             % xmode=log,
@@ -57,11 +56,11 @@
             legend style={at={(0.99,0.99)}, anchor = north east},
             legend columns = 1,
         ]
-        % ,each nth point=100, filter discard warning=fals
-        \addplot [mark=none,color=TUMRed, thick] table[col sep=comma,x=latency,y expr=1-\thisrow{cdf}] {data/latency_read/vroom_qd1_read_latencies_mmio.csv};
-        \addplot [mark=+,color=TUMDarkBlue, thick,mark repeat*=20] table[col sep=comma,x=latency,y expr=1-\thisrow{cdf}] {data/latency_read/vroom_qd1_read_latencies_vfio_4k.csv};
-        \addplot [mark=x,color=TUMBlue, thick,mark repeat*=80] table[col sep=comma,x=latency,y expr=1-\thisrow{cdf}] {data/latency_read/vroom_qd1_read_latencies_vfio_2m.csv};
-        \addplot [mark=triangle,color=TUMLightBlue, thick,mark repeat*=160] table[col sep=comma,x=latency,y expr=1-\thisrow{cdf}] {data/latency_read/vroom_qd1_read_latencies_vfio_1g.csv};
+
+        \addplot [mark=none,color=TUMRed, thick] table[col sep=comma,x=latency,y expr=1-\thisrow{cdf}] {data/latency_ccdf_write/vroom_qd1_write_latencies_mmio.csv};
+        \addplot [mark=+,color=TUMDarkBlue, thick,mark repeat*=20] table[col sep=comma,x=latency,y expr=1-\thisrow{cdf}] {data/latency_ccdf_write/vroom_qd1_write_latencies_vfio_4k.csv};
+        \addplot [mark=x,color=TUMBlue, thick,mark repeat*=80] table[col sep=comma,x=latency,y expr=1-\thisrow{cdf}] {data/latency_ccdf_write/vroom_qd1_write_latencies_vfio_2m.csv};
+        \addplot [mark=triangle,color=TUMLightBlue, thick,mark repeat*=160] table[col sep=comma,x=latency,y expr=1-\thisrow{cdf}] {data/latency_ccdf_write/vroom_qd1_write_latencies_vfio_1g.csv};
 
         \addplot[mark=none,color=black!60,forget plot,dashed,thick] coordinates {
                 (0,0.1)

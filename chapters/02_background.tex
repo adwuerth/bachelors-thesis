@@ -15,6 +15,13 @@ Using DMA Remapping (DMAR) the CPUs MMU is bypassed and the DMA request is handl
 The IOMMU does this by performing page table walks, through which a physical address is translated to a virtual address.
 To improve performance on the IOMMU, an IOTLB is used to cache translations.
 
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{figures/4kibtranslation.pdf}
+    \caption{VT-d Paging structure for translating a 48-bit address to a 4-KByte page}
+    \label{fig:pagewalk4kib}
+\end{figure}
+
 \section{I/O Translation Lookaside Buffer}
 As page table walks are rather costly in performance, a cache on the IOMMU is used to store previously calculated addresses. This cache is called the Input/Output Translation Lookaside Buffer. The IOTLB possesses a limited capacity for entries which is not officially documented.
 
