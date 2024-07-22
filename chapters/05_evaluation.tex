@@ -9,7 +9,8 @@ During our tests we will use 4KiB unit sizes for read and write accesses.
 As Linux as well as our IOMMU supports 4KiB, 2MiB and 1GiB page sizes we will test and analyse how it affects the overall performance.
 
 \section{Overall Latency and Throughput}
-First, we will compare the VFIO implementation to the MMIO implementation using latency and throughput tests. In these tests, we can see that there is practically a negligable amount of overhead. Notable is that the page size has no impact on the performance. This test uses one buffer from which the NVMe driver reads/writes to. This buffer and the Queues can fit on the IOTLB. Fetching addresses from the IOTLB is very efficient and thus, no significatn performance impact occurs.
+First, we will compare the VFIO implementation to the MMIO implementation using latency and throughput tests. In these tests, we can see that there is practically a negligable amount of overhead. Notable is that the page size has no impact on the performance. This test uses one buffer from which the NVMe driver reads/writes to. This buffer and the Queues can fit on the IOTLB. Fetching addresses from the IOTLB is very efficient and thus, no significant performance impact occurs.
+
 \begin{figure}
     \centering
     \subcaptionbox {Random write} {\includegraphics[width=\textwidth]{figures/latency_ccdf_write} \label{fig:ccdf-write}}

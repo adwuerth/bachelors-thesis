@@ -7,13 +7,14 @@ A NVMe driver consists of submission and completion queues, implemented as ring 
 The driver adds commands to the submission queue, which the NVMe controller reads and executes.
 The executed command gets placed on a corresponding completion queue.
 For accessing the devices memory as well as the device accessing the host memory, it is necessary to either use the physical addresses and compromise on safety and use root privileges or use the IOMMU for virtualization, which can introduce performance overhead.
-We unbind the kernel driver and bind it to pci-stub. Pci-stub does not do anything but occupy the Pci-driver such that the kernel or another application can not bind to the device.
+We unbind the kernel driver and bind it to pci-stub. Pci-stub does not do anything but occupy the pci-driver such that the kernel or another application can not bind to the device.
 
 \section{I/O Memory Management Unit}
+The I/O Memory Management Unit intercepts the PCI Bus and the CPU/Memory.
 The IOMMU works similarly to the MMU in the CPU, mapping physical addresses to virtual addresses.
 Using DMA Remapping (DMAR) the CPUs MMU is bypassed and the DMA request is handled by the IOMMU.
-The IOMMU does this by performing page table walks, through which a physical address is translated to a virtual address.
-To improve performance on the IOMMU, an IOTLB is used to cache translations.
+The IOMMU does this by performing page table walks, through which a physical address is translated to a virtual address. To manage the huge address spaces required by modern computing, multi-level page tables are used. This results in a huge virtual address space size, but a single address resolution using multiple memory accesses. In the case of Intels VT-d the page table structures consists of 4, 3 and 2 tables for 4kib, 2mib and 1gib pages respectively as seen on \autoref{fig:pagewalk4kib}.
+In order to not perform such an expensive operation on every address resolution, a buffer is used to cache previous translations. This buffer is called the I/O Translation Lookaside Buffer (IOTLB). Using the buffer results in a fraction of the time needed to perform a page walk. If an address is not stored in the TLB, it is called a TLB miss, and the IOMMU has to perform a page table walk.
 
 \begin{figure}
     \centering
@@ -25,16 +26,10 @@ To improve performance on the IOMMU, an IOTLB is used to cache translations.
 \section{I/O Translation Lookaside Buffer}
 As page table walks are rather costly in performance, a cache on the IOMMU is used to store previously calculated addresses. This cache is called the Input/Output Translation Lookaside Buffer. The IOTLB possesses a limited capacity for entries which is not officially documented.
 
-\section{Virtual Function I/O}
-VFIO is an IOMMU agnostic framework for exposing devices to userspace.
-This allows the driver to be safe and non-privileged in comparison to directly mapping the device memory to userspace.
-Using the VFIO works by using ioctl system calls.
-
-\section{IOMMUFD}
-IOMMUFD is a user API for exposing DMA to userspace.
-It allows management of I/O address spaces (IOAS), enabling mapping/unmapping user space memory on the IOMMU.
-
 \subsection{Character and Block Devices}
 Unix/Linux use two types of devices: Character and Block devices. Character devices are used for devices with small amounts of data and no frequent seek queries, like keyboard and mouse. Block devices on the other hand have a large data volumes, which are organized in blocks and where search is common, like hardddrives and ram disks.
 Read and Write operations on character devices are done sequentially byte-by-byte, while on block devices, read/write is done at the data block level.
 These constraints also impact how the drivers for these devices work. CDev drivers directly communicate with the device drivers, while block device drivers work in conjunction with the kernel file management and block device subsystem. This allows efficient asynchronous read/write operations for large data amounts, but small byte sized data transfer achieves lower latency on character devices.
+
+\subsection{Rust}
+Rust as a programming language offers a lot of benefits, especially in the systems programming field. The memory safety enforced by the borrow checker and the focus on providing the most concise and exact syntax like default variable immutability while obmitting boilerplate make it an excellent choice for modern systems development.

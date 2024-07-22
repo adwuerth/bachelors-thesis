@@ -8,8 +8,8 @@
 \usepackage[%
   % backend=biber, % somehow biber did not work properly with latexrun. If you find a solution, feel free to open a merge request
   backend=bibtex,
-  url=false,
-  style=alphabetic,
+  url=true,
+  style=numeric,
   maxnames=4,
   minnames=3,
   maxbibnames=99,
@@ -32,13 +32,6 @@
 \usepackage{setspace}
 \usepackage{subcaption}
 
-\lstset{
-  basicstyle=\ttfamily,
-  columns=fullflexible,
-  frame=single,
-  breaklines=true,
-  postbreak=\mbox{\textcolor{red}{$\hookrightarrow$}\space},
-}
 
 \hypersetup{
   pdftitle={\getTitle},
@@ -85,7 +78,10 @@
   columns=fullflexible,
   autogobble,
   keywordstyle=\bfseries\color{MediumBlue},
-  stringstyle=\color{DarkGreen}
+  stringstyle=\color{DarkGreen},
+  frame=single,
+  breaklines=true,
+  postbreak=\mbox{\textcolor{red}{$\hookrightarrow$}\space},
 }
 
 \usepackage{amsmath}

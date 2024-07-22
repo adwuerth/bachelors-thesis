@@ -1,2 +1,3 @@
 \chapter{Conclusion}
 
+In this thesis, we improved vroom's safety by implementing IOMMU support. We come to the same conclusion as SPDK. The advantages of using the VFIO such as variable page support by not using page pinning as well as the ability to run the driver without root privileges overweigh the small performance impact that can be registered in niche cases. Considering that IOMMU technology has seen a rise in popularity in the use of hardware passtrough for virtualization it is also likely that in the future the IOMMU performance and the IOTLB size will increase, further closing the gap.

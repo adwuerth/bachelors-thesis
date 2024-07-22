@@ -6,4 +6,5 @@ The isolation layer prevents devices from accessing memory that they are not all
 An additional benefit of the IOMMU is that root privileges are not needed to access memory.
 We demonstrate the effects of using the IOMMU by implementing it on the NVMe driver vroom. \cite{vroom}
 We use Rust to implement the driver and the userspace application as it offers high performance and memory safety without garbage collection.
+As even the Linux Kernel, which has stuck to C for more that 30 years not admitting any other languages like C++, not permits Rust code in its codebase, we can see Rusts impact on the systems development community.
 The IOMMU used in this thesis is an Intel IOMMU using the VT-d extension.

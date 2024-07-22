@@ -1,6 +1,11 @@
 \chapter{Implementation}
 
-\section{VFIO}
+\section{Virtual Function I/O}
+Virtual Function I/O (VFIO) is an IOMMU agnostic framework for exposing devices to userspace.
+The VFIO driver binds to the PCI device and manages address translation through the IOMMU.
+This allows the driver to be safe and non-privileged in comparison to directly mapping the device memory to userspace.
+Using the VFIO works by using ioctl system calls.
+While there is Rust's extensive \texttt{libc} library providing the system calls \texttt{ioctl} and \texttt{mmap} and their flags, the Linux \texttt{vfio.h} constants and structs need to either be defined manually or with a crate like bindgen, which automates bindings for C and C++ libraries \cite{cratebindgen}. To keep the binary and dependency list as small as possible we chose the manual implementation.
 
 \begin{figure}
     \centering
@@ -40,11 +45,13 @@ After this, the real work of the driver happens using these steps:
     \item Passing I/O Queue addresses to NVMe device using admin queues
 \end{enumerate}
 
-
 \subsection{Enabling DMA}
 
 \subsection{Mapping DMA}
-In order to provide a section of memory on which the device can perform DMA operations, the user needs to allocate some memory in the processes address space. This is done by using mmap. Using mmap's flags we can also define the page size used. The MAP\_HUGETLB is used in conjunction with the MAP\_HUGE\_2MB and MAP\_HUGE\_1GB flags for 2MiB and 1 GiB pages respectively. By default mmap uses the default page size of 4KiB.
+In order to provide a section of memory on which the device can perform DMA operations, the user needs to allocate some memory in the processes address space.
+This is done by using \texttt{mmap}.
+Using \texttt{mmap}'s flags we can also define the page size used. The \texttt{MAP\_HUGETLB} flag is used in conjunction with the \texttt{MAP\_HUGE\_2MB} and \texttt{MAP\_HUGE\_1GB} flags for 2MiB and 1 GiB pages respectively.
+By default \texttt{mmap} uses the default page size of 4KiB.
 The main IOMMU work is done by then creating the map struct vfio\_iommu\_type1\_dma\_map. We set the DMA mapping to read and write, and provide the same IOVA as the Virtual address. By then passing it to an ioctl call with the according VFIO operation VFIO\_IOMMU\_MAP\_DMA we can create a mapping in the page tables of the IOMMU. This way we can give the IOVA to the NVMe controller, which it will use to access the memory through the address translation of the IOMMU.
 
 \subsection{Unmapping DMA}
@@ -62,9 +69,10 @@ To further reduce overhead from the IOMMU Containers are used in VFIO, which can
 In our implementation we use one group and container each for our NVMe device.
 
 \section{IOMMUFD}
-IOMMUFD has only been recently added to the Linux Kernel. E.g. Debian 12 does not support it. In our driver we offer both options of using the IOMMU.
+The IOMMU File Descriptor user API (IOMMUFD) offers a way of controlling the IOMMU subsystem using file descriptors in user-space \cite{iommufdkerneldocs}.
+It allows management of I/O address spaces (IOAS), enabling mapping user space memory on the IOMMU.
+IOMMUFD has only been recently added to the Linux Kernel in December of 2022. E.g. Debian 12 does not include it, Fedora 40 does, but it is not enabled in the kernel configuration. Considering that it is not widely available or enabled on many distributions, our driver offers both options of using the IOMMU. The performance tests are done using the 'legacy' VFIO-only way, but it can be assumed that the framework/user api does not have a noteworthy performance impact.
 The device file descriptor, which was previously attained with \texttt{VFIO\_GROUP\_GET\_DEVICE\_FD} can now be gotten through opening the character device /dev/vfio/devices/vfioX.
 By using this character device pointer we can claim the ownership over the VFIO device. That way VFIO does not rely on group/container/iommu drivers.
-As IOMMUFD is not widely used yet, we conducted the evaluation with the legacy VFIO group interface. The performance should not differ, as the hardware is the bottleneck during I/O operations.
 
 \subsection{IOAS}
