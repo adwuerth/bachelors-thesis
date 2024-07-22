@@ -35,36 +35,32 @@
             set layers,
             width=20.2cm,
             height=6.4cm,
-            xmin=400, xmax=1000,
-            ymin=0.001, ymax=1,
+            xmin=0, xmax=30,
+            ymin=0.000004, ymax=1,
             ymode=log,
             % xmode=log,
             grid=major,
             ylabel={CCDF},
             xlabel={Latency [$\mu$s]},
             % xtick={0,20,40,200,500,1000,2000},
-            ytick={1, 0.1, 0.01, 0.001},
-            yticklabels={$10^0$,~,$10^{-2}$,~},
+            ytick={1, 0.1, 0.01, 0.001, 0.0001, 0.00001, 0.000001},
+            yticklabels={$10^0$,~,$10^{-2}$,~,$10^{-4}$,~,$10^{-6}$},
             minor ytick={.9, .8, .7, .6, .5, .4, .3, .2, .09, .08, .07, .06, .05, .04, .03, .02, .009, .008, .007, .006, .005, .004, .003, .002, .0009, .0008, .0007, .0006, .0005, .0004, .0003, .0002, .00009, .00008, .00007, .00006, .00005, .00004, .00003, .00002, .000009, .000008, .000007, .000006, .000005, .000004, .000003, .000002},
             %	legend style={font=\fontsize{8}{9}\selectfont},
             %	tick label style={font=\fontsize{8}{9}\selectfont},
             %	label style={font=\fontsize{8}{9}\selectfont},
             every axis legend/.append style={nodes={right}},
             % legend entries={\texttt{io\_uring}, \texttt{libaio}, \texttt{psync}, vroom, SPDK},
-            legend entries={MMIO 256, MMIO, VFIO tr strict, VFIO pt strict, VFIO tr relaxed, VFIO pt relaxed},
+            legend entries={MMIO, VFIO 4K, VFIO 2M, VFIO 1G},
             legend pos = north east,
             legend style={at={(0.99,0.99)}, anchor = north east},
             legend columns = 1,
         ]
         % ,each nth point=100, filter discard warning=fals
-
-        \addplot [mark=none,color=TUMLightRed, thick] table[col sep=comma,x=latency,y expr=1-\thisrow{cdf}] {data/mappings/outputallocate_mmio_256.csv};
-        \addplot [mark=none,color=TUMPurple, thick] table[col sep=comma,x=latency,y expr=1-\thisrow{cdf}] {data/mappings/outputallocate_mmio_1024.csv};
-        \addplot [mark=none,color=TUMTurquois, thick] table[col sep=comma,x=latency,y expr=1-\thisrow{cdf}] {data/mappings/outputallocate_combined_1024.csv};
-        \addplot [mark=none,color=TUMDarkGreen, thick] table[col sep=comma,x=latency,y expr=1-\thisrow{cdf}] {data/mappings/outputallocate_combined_pt_1024.csv};
-        \addplot [mark=none,color=TUMYellow, thick] table[col sep=comma,x=latency,y expr=1-\thisrow{cdf}] {data/mappings/outputallocate_combined_nonstrict_1024.csv};
-        \addplot [mark=none,color=TUMRed, thick] table[col sep=comma,x=latency,y expr=1-\thisrow{cdf}] {data/mappings/outputallocate_combined_pt_nonstrict_1024.csv};
-
+        \addplot [mark=none,color=TUMRed, thick] table[col sep=comma,x=latency,y expr=1-\thisrow{cdf}] {data/latency_write/vroom_qd1_write_latencies_mmio.csv};
+        \addplot [mark=+,color=TUMDarkBlue, thick,mark repeat*=20] table[col sep=comma,x=latency,y expr=1-\thisrow{cdf}] {data/latency_write/vroom_qd1_write_latencies_vfio_4k.csv};
+        \addplot [mark=x,color=TUMBlue, thick,mark repeat*=80] table[col sep=comma,x=latency,y expr=1-\thisrow{cdf}] {data/latency_write/vroom_qd1_write_latencies_vfio_2m.csv};
+        \addplot [mark=triangle,color=TUMLightBlue, thick,mark repeat*=160] table[col sep=comma,x=latency,y expr=1-\thisrow{cdf}] {data/latency_write/vroom_qd1_write_latencies_vfio_1g.csv};
 
         \addplot[mark=none,color=black!60,forget plot,dashed,thick] coordinates {
                 (0,0.1)

@@ -12,13 +12,13 @@ As Linux as well as our IOMMU supports 4KiB, 2MiB and 1GiB page sizes we will te
 First, we will compare the VFIO implementation to the MMIO implementation using latency and throughput tests.
 \begin{figure}
     \centering
-    \subcaptionbox {Random write} {\includegraphics[width=\textwidth]{figures/latency-ccdf-write} \label{fig:ccdf-write}}
+    \subcaptionbox {Random write} {\includegraphics[width=\textwidth]{figures/latency_write} \label{fig:ccdf-write}}
     \caption{Tail latencies}
     \label{fig:ccdf}
 \end{figure}
 
 \section{IOTLB}
-As the size of the IOTLB is not stated in hardware and VT-d specifications, we use a latency test to see the behaviour of the IOMMU. We can assume that the IOTLB entry count must be a power of two. In order to isolate the effect of the IOMMU we use the median of random write latencies on the emptied NVMe.
+As the size of the IOTLB is not stated in hardware and VT-d specifications, we use a latency test to see the behaviour of the IOMMU. We can assume that the IOTLB entry count must be a power of two. In order to isolate the effect of the IOMMU we use the median of random write latencies on the emptied NVMe. We use a test that repetitly writes one byte to the ssd from to 8, 16, 32, 64, ... pages. Taking the median and comparing them we can figure out where a latency spike occurs and can then derive the IOTLB size.
 
 Nvme Driver: 2 2mib sub queues, 2 2mib comp queues, 1 2mib buffer, 1 4kib prp\_list => 512 * 2 + 512 * 2 + 512 + 1 = 2561 4KiB Pages, or 5 MiB Pages, depending on pagesize
 
