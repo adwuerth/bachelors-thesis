@@ -9,7 +9,8 @@ During our tests we will use 4KiB unit sizes for read and write accesses.
 As Linux as well as our IOMMU supports 4KiB, 2MiB and 1GiB page sizes we will test and analyse how it affects the overall performance.
 
 \section{Overall Latency and Throughput}
-First, we will compare the VFIO implementation to the MMIO implementation using latency and throughput tests. In these tests, we can see that there is practically a negligable amount of overhead. Notable is that the page size has no impact on the performance. This test uses one buffer from which the NVMe driver reads/writes to. This buffer and the Queues can fit on the IOTLB. Fetching addresses from the IOTLB is very efficient and thus, no significant performance impact occurs.
+First, we will compare the VFIO implementation to the MMIO implementation using latency and throughput tests. In these tests, we can see that there is practically a negligable amount of overhead. Notable is that the page size has no impact on the performance.
+This test uses one buffer from which the NVMe driver reads/writes to. This buffer and the Queues can fit on the IOTLB. Fetching addresses from the IOTLB is very efficient and thus, no significant performance impact occurs.
 
 \begin{figure}
     \centering
@@ -20,7 +21,8 @@ First, we will compare the VFIO implementation to the MMIO implementation using 
 \end{figure}
 
 \section{IOTLB}
-As the size of the IOTLB is not stated in hardware and VT-d specifications, we use a latency test to see the behaviour of the IOMMU. We can assume that the IOTLB entry count must be a power of two. In order to isolate the effect of the IOMMU we use the median of random write latencies on the emptied NVMe. We use a test that repetitly writes one byte to the ssd from to 8, 16, 32, 64, ... pages. Taking the median and comparing them we can figure out where a latency spike occurs and can then derive the IOTLB size.
+As the size of the IOTLB is not stated in hardware and VT-d specifications, we use a latency test to see the behaviour of the IOMMU. We can assume that the IOTLB entry count must be a power of two. In order to isolate the effect of the IOMMU we use the median of random write latencies on the emptied NVMe. We use a test that repetitly writes one byte to the ssd from to 8, 16, 32, 64, ... pages. Taking the median and comparing them we can figure out where a latency spike occurs and can then derive the IOTLB size. We configure the queues, buffer and prp-list to each take up one page, resulting in 6 allocated pages before the actual workload. This test is done using memory-mapped I/O and the IOMMU with 4Kib and 2Mib pages.
+On the resulting graph \autoref{fig:med-ps} we can observe a performance spike of around 300 nanoseconds between 128 and 256 allocated pages.
 
 Nvme Driver: 2 2mib sub queues, 2 2mib comp queues, 1 2mib buffer, 1 4kib prp\_list => 512 * 2 + 512 * 2 + 512 + 1 = 2561 4KiB Pages, or 5 MiB Pages, depending on pagesize
 
