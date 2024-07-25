@@ -7,26 +7,15 @@ This allows the driver to be safe and non-privileged in comparison to directly m
 Using the VFIO works by using ioctl system calls.
 While there is Rust's extensive \texttt{libc} library providing the system calls \texttt{ioctl} and \texttt{mmap} and their flags, the Linux \texttt{vfio.h} constants and structs need to either be defined manually or with a crate like bindgen, which automates bindings for C and C++ libraries \cite{cratebindgen}. To keep the binary and dependency list as small as possible we chose the manual implementation.
 
-\begin{figure}
-    \centering
-    \includegraphics[width=\textwidth]{figures/vroomgraphlight.png}
-    \caption{I/O operation vroom}
-    \label{fig:vroom-graph}
-\end{figure}
 
 \subsection{Initialising the IOMMU}
 
-To use the IOMMU for the driver, we first need to initialize the VFIO kernel module and bind the VFIO driver to the NVMe device:
-This has to be done using root privileges. By chowning the VFIO container, the driver can use the VFIO driver to interact with the device without root.
+To use the IOMMU for the driver, we first need to initialize the VFIO kernel module and bind the VFIO driver to the NVMe device.
+As this binds the driver to a device, it has to be run with root privileges.
+By changing the owner of the VFIO container to an unprivileged user, the driver can use the VFIO driver to interact with the device without root.
+In \autoref{lst:vfioinit} the initialization script for the Vfio driver is shown.
 
-\begin{enumerate}
-    \item Add VFIO kernel module using \texttt{modprobe}
-    \item Unbind kernel driver from NVMe
-    \item Using vendor and device id to bind VFIO to the device
-    \item Setting VFIO group permissions to user/group using \texttt{chown}
-\end{enumerate}
-
-\begin{lstlisting}[language=bash,caption={Initializing VFIO using bash}]
+\begin{lstlisting}[language=bash,caption={Initializing VFIO using bash}, label=lst:vfioinit, frame=single]
     #!/bin/bash
     modprobe vfio-pci
     nvme_vd="$(cat /sys/bus/pci/devices/$nvme/vendor) $(cat /sys/bus/pci/devices/$nvme/device)"
@@ -35,25 +24,41 @@ This has to be done using root privileges. By chowning the VFIO container, the d
     chown $user:$group /dev/vfio/*     
 \end{lstlisting}
 
-After this, the real work of the driver happens using these steps:
+\begin{enumerate}
+    \item Add VFIO kernel module using \texttt{modprobe}
+    \item Unbind kernel driver from NVMe
+    \item Use vendor and device id to bind VFIO to the device
+    \item Set VFIO group permissions to user/group using \texttt{chown}
+\end{enumerate}
+
+\subsection{Initialising the NVMe device}
+Using the Vfio, the initialization process of the NVMe SSD works as followed.
 
 \begin{enumerate}
-    \item Mapping the NVMe device memory into host memory using VFIO resource info.
-    \item Allocating Admin SQ, CQ and I/O SQ, CQ
-    \item Creating a mapping on the IOMMU using VFIO
-    \item Configuring the NVMe device
-    \item Passing I/O Queue addresses to NVMe device using admin queues
+    \item Map the NVMe device memory into host memory using VFIO resource info.
+    \item Allocate Admin SQ, CQ and I/O SQ, CQ
+    \item Create a mapping on the IOMMU using VFIO
+    \item Configure the NVMe device
+    \item Pass I/O Queue addresses to NVMe device using admin queues
 \end{enumerate}
 
 \subsection{Enabling DMA}
 To enable DMA we need to set a bit in the PCIe device registers.
 
 \subsection{Mapping DMA}
-In order to provide a section of memory on which the device can perform DMA operations, the user needs to allocate some memory in the processes address space.
-This is done by using \texttt{mmap}.
-Using \texttt{mmap}'s flags we can also define the page size used. The \texttt{MAP\_HUGETLB} flag is used in conjunction with the \texttt{MAP\_HUGE\_2MB} and \texttt{MAP\_HUGE\_1GB} flags for 2MiB and 1 GiB pages respectively.
+In order to provide a section of memory on which the device can perform DMA operations, the user needs to allocate some memory in the processes address space. This can be achieved by using the Linux syscall \texttt{mmap}.
+Using \texttt{mmap}'s flags we can also define the page size used.
+The \texttt{MAP\_HUGETLB} flag is used in conjunction with the \texttt{MAP\_HUGE\_2MB} and \texttt{MAP\_HUGE\_1GB} flags for 2MiB and 1 GiB pages respectively.
 By default \texttt{mmap} uses the default page size of 4KiB.
-The main IOMMU work is done by then creating the map struct vfio\_iommu\_type1\_dma\_map. We set the DMA mapping to read and write, and provide the same IOVA as the Virtual address. By then passing it to an ioctl call with the according VFIO operation VFIO\_IOMMU\_MAP\_DMA we can create a mapping in the page tables of the IOMMU. This way we can give the IOVA to the NVMe controller, which it will use to access the memory through the address translation of the IOMMU.
+The main IOMMU work is done by then creating the map struct \texttt{vfio\_iommu\_type1\_dma\_map}. We set the DMA mapping to read and write, and provide the same IOVA as the Virtual address. By then passing it to an ioctl call with the according VFIO operation \texttt{VFIO\_IOMMU\_MAP\_DMA} we can create a mapping in the page tables of the IOMMU. This way we can give the IOVA to the NVMe controller, which it will use to access the memory through the address translation of the IOMMU.
+On \autoref{fig:vroom-graph} an I/O operation timeline graph can be seen.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{figures/vroomgraphlight.png}
+    \caption{I/O operation vroom}
+    \label{fig:vroom-graph}
+\end{figure}
 
 \subsection{Unmapping DMA}
 Unmapping DMA happens when the process exits, yet for performance and application reasons there is the unmap\_dma function which can be used to unmap a DMA. It is necessary to increase the allocated size to a multiple of the page size as otherwise the munmap operation will result in a failure.
@@ -62,10 +67,8 @@ Unmapping DMA happens when the process exits, yet for performance and applicatio
 Using regions, we can directly mmap device memory into host memory for easy access to the NVMe controller.
 VFIO provides structs for using mmap to directly map the NVMe device into memory. Using \texttt{VFIO\_DEVICE\_GET\_REGION\_INFO} we can attain the length and the offset needed for mmap.
 
-\subsection{Groups}
+\subsection{Groups and Containers}
 VFIO uses group to distinguish between groups of devices which can be isolated from the host system. In the ideal case, every device would only be part of one group in order to increase security by providing single-device isolation. Groups are the smallest unit size on a system to ensure secure user access.
-
-\subsection{Containers}
 To further reduce overhead from the IOMMU Containers are used in VFIO, which can hold multiple groups. These containers can be used to ease translation and reduce TLB page faults.
 In our implementation we use one group and container each for our NVMe device.
 

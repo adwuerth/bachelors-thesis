@@ -2,7 +2,7 @@
 In this chapter, we analyse the performance impact of the IOMMU, directly comparing it to the physical address approach. We will not be comparing the performance of memory allocation and mapping as in high throughput applications it should be negligable. The main focus lies on the IOMMU itself and how it performs with different page sizes.
 
 \section{Setup}
-All benchmarks are run on a system with an Intel Xeon E5-2660 with \qty{251}{\gibi\byte} of RAM running Ubuntu 23.10 with a \qty{1}{\tera\byte} Samsung Evo 970 Plus NVMe SSD.
+All benchmarks are run on a system with an Intel Xeon E5-2660 with \qty{256}{\giga\byte} of RAM running Ubuntu 23.10 with a \qty{1}{\tera\byte} Samsung Evo 970 Plus NVMe SSD.
 % IOMMU specs, processor, ...
 
 During our tests we will use 4KiB unit sizes for read and write accesses.
@@ -22,15 +22,21 @@ This test uses one buffer from which the NVMe driver reads/writes to. This buffe
 
 \section{IOTLB}
 As the size of the IOTLB is not stated in hardware and VT-d specifications, we use a latency test to see the behaviour of the IOMMU. We can assume that the IOTLB entry count must be a power of two. In order to isolate the effect of the IOMMU we use the median of random write latencies on the emptied NVMe. We use a test that repetitly writes one byte to the ssd from to 8, 16, 32, 64, ... pages. Taking the median and comparing them we can figure out where a latency spike occurs and can then derive the IOTLB size. We configure the queues, buffer and prp-list to each take up one page, resulting in 6 allocated pages before the actual workload. This test is done using memory-mapped I/O and the IOMMU with 4Kib and 2Mib pages.
+In order to test 1GiB pages, we first need to increase the ulimit settings, as memlock limits the amount of locked-in-memory address space.
 On the resulting graph \autoref{fig:med-ps} we can observe a performance spike of around 300 nanoseconds between 128 and 256 allocated pages.
-
-Nvme Driver: 2 2mib sub queues, 2 2mib comp queues, 1 2mib buffer, 1 4kib prp\_list => 512 * 2 + 512 * 2 + 512 + 1 = 2561 4KiB Pages, or 5 MiB Pages, depending on pagesize
 
 \begin{figure}
     \centering
-    \includegraphics[width=\textwidth]{figures/latency_ps_medians}
+    \includegraphics[width=\textwidth]{figures/latency_ps_medians_full}
     \caption{Pagesize Medians}
     \label{fig:med-ps}
 \end{figure}
 
-\section{Mapping}
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{figures/latency_ps_medians_bar}
+    \caption{Pagesize Medians}
+    \label{fig:med-ps-bar}
+\end{figure}
+
+\section{IOMMU modes}

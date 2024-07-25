@@ -1,0 +1,55 @@
+\documentclass[class=minimal,border=10pt]{standalone}
+\usepackage{tumcolor}
+
+\usepackage{pgfplots}
+\usepackage{pgfplotstable}
+\pgfplotsset{compat=newest}
+\usetikzlibrary{pgfplots.groupplots}
+\pgfplotsset{grid style={dotted}}
+\usetikzlibrary{plotmarks}
+
+\begin{document}
+\tikzset{every mark/.append style={scale=1.2}}
+\begin{tikzpicture}
+    \begin{axis}[
+            % yscale=0.5,
+            height=8cm,
+            width=14cm,
+            xmin=8,xmax=2048,
+            xtick=data,
+            xmode = log,
+            xlabel={Pages},
+            xtick={8,16,32,64,128,256,512, 1024, 2048},
+            xticklabels={8,16,32,64,128,256,512,1024,2048},
+            ymin=8600,ymax=9050,
+            ylabel style={align=center},
+            ylabel={Latency in ns},
+            ymajorgrids=true,
+            scale only axis,
+            % nodes near coords,
+            % nodes near coords align={vertical},
+            grid=major,
+            % enlarge x limits=0.5,
+            % legend columns=2,
+            % legend pos = north west,
+            % legend style = {at={(0.05,1.90)}, anchor = north west},
+            % y tick style={draw=none}
+            % enlarge x limits = 0.1,
+            % enlarge y limits = 0.1,
+            every axis legend/.append style={nodes={right}},
+            % legend entries={\texttt{io\_uring}, \texttt{libaio}, \texttt{psync}, vroom, SPDK},
+            legend entries={MMIO, VFIO 4K, VFIO 2M, VFIO 1G},
+            legend pos = north east,
+            legend style={at={(0.01,0.98)}, anchor = north west},
+            legend columns = 1,
+        ]
+
+
+        \addplot [mark=none,color=TUMRed] table[col sep=comma,x=pages,y=latency] {data/latency_medians_pagesize_full/MMIO.csv};
+        \addplot [mark=none,color=TUMBlue] table[col sep=comma,x=pages,y=latency] {data/latency_medians_pagesize_full/4Kibps.csv};
+        \addplot [mark=none,color=TUMGreen] table[col sep=comma,x=pages,y=latency] {data/latency_medians_pagesize_full/2Mibps.csv};
+        \addplot [mark=none,color=TUMYellow] table[col sep=comma,x=pages,y=latency] {data/latency_medians_pagesize_full/1Gibps.csv};
+
+    \end{axis}
+\end{tikzpicture}
+\end{document}
