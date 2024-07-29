@@ -9,7 +9,7 @@ During our tests we will use 4KiB unit sizes for read and write accesses.
 As Linux as well as our IOMMU supports 4KiB, 2MiB and 1GiB page sizes we will test and analyse how it affects the overall performance.
 
 \section{Overall Latency and Throughput}
-First, we will compare the VFIO implementation to the MMIO implementation using latency and throughput tests. In these tests, we can see that there is practically a negligable amount of overhead. Notable is that the page size has no impact on the performance.
+First, we will compare the VFIO implementation to the MMIO implementation using latency and throughput tests. In these tests, we can see that there is practically a negligable amount of overhead. As this test only uses a one page buffer at maximum, the buffer is constantly stored in the IOTLB.
 This test uses one buffer from which the NVMe driver reads/writes to. This buffer and the Queues can fit on the IOTLB. Fetching addresses from the IOTLB is very efficient and thus, no significant performance impact occurs.
 
 \begin{figure}
@@ -20,10 +20,17 @@ This test uses one buffer from which the NVMe driver reads/writes to. This buffe
     \label{fig:ccdf}
 \end{figure}
 
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{figures/throughputqd32t1singlepage} \label{fig:iopsq32t1sp}
+    \caption{Write and Read Operations with queue depth 32 and 4 threads}
+    \label{fig:ccdf}
+\end{figure}
+
 \section{IOTLB}
 As the size of the IOTLB is not stated in hardware and VT-d specifications, we use a latency test to see the behaviour of the IOMMU. We can assume that the IOTLB entry count must be a power of two. In order to isolate the effect of the IOMMU we use the median of random write latencies on the emptied NVMe. We use a test that repetitly writes one byte to the ssd from to 8, 16, 32, 64, ... pages. Taking the median and comparing them we can figure out where a latency spike occurs and can then derive the IOTLB size. We configure the queues, buffer and prp-list to each take up one page, resulting in 6 allocated pages before the actual workload. This test is done using memory-mapped I/O and the IOMMU with 4Kib and 2Mib pages.
 In order to test 1GiB pages, we first need to increase the ulimit settings, as memlock limits the amount of locked-in-memory address space.
-On the resulting graph \autoref{fig:med-ps} we can observe a performance spike of around 300 nanoseconds between 128 and 256 allocated pages.
+On the resulting graph \autoref{fig:med-ps} we can observe a performance spike of around 200 nanoseconds for each write between 128 and 256 allocated pages.
 
 \begin{figure}
     \centering
@@ -32,11 +39,11 @@ On the resulting graph \autoref{fig:med-ps} we can observe a performance spike o
     \label{fig:med-ps}
 \end{figure}
 
-\begin{figure}
-    \centering
-    \includegraphics[width=\textwidth]{figures/latency_ps_medians_bar}
-    \caption{Pagesize Medians}
-    \label{fig:med-ps-bar}
-\end{figure}
+% \begin{figure}
+%     \centering
+%     \includegraphics[width=\textwidth]{figures/latency_ps_medians_bar}
+%     \caption{Pagesize Medians}
+%     \label{fig:med-ps-bar}
+% \end{figure}
 
 \section{IOMMU modes}

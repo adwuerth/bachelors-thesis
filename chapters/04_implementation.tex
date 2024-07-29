@@ -7,6 +7,28 @@ This allows the driver to be safe and non-privileged in comparison to directly m
 Using the VFIO works by using ioctl system calls.
 While there is Rust's extensive \texttt{libc} library providing the system calls \texttt{ioctl} and \texttt{mmap} and their flags, the Linux \texttt{vfio.h} constants and structs need to either be defined manually or with a crate like bindgen, which automates bindings for C and C++ libraries \cite{cratebindgen}. To keep the binary and dependency list as small as possible we chose the manual implementation.
 
+Using \texttt{VFIO\_IOMMU\_GET\_INFO} we can see the supported pagesizes. As our IOMMU supports 4K, 2M and 1G pagesizes the field iova\_pgsizes has the value 0x40201000.
+
+\section{syscalls}
+A variety of syscalls are used in the process of allocation and mapping. These syscalls are mmap, ioctl, pread, pwrite (and mlock for the non IOMMU version). While there exist crates which implement the syscall functionality, to avoid inflating the dependency list and executable size we use the libc crate to implement them. As these require C-like syntax and an unsafe block in Rust, wrapper macros/inline functions are used to provide local, secure error handling, while also minimising the calling of unsafe code. In \autoref{lst:mmapmacro} the macro for the mmap syscall can be seen.
+As part of our error handling, we introduce an error enum variant for each syscall.
+
+\begin{lstlisting}[language=Rust, label=lst:mmapmacro]
+    #[macro_export]
+    macro_rules! mmap {
+        ($addr:expr, $len:expr, $prot:expr, $flags:expr, $fd:expr, $offset:expr) => {{
+            let ptr = unsafe { libc::mmap($addr, $len, $prot, $flags, $fd, $offset) };
+            if ptr == libc::MAP_FAILED {
+                Err(Error::Mmap {
+                    error: (format!("Mmap with len {} failed", $len)),
+                    io_error: (std::io::Error::last_os_error()),
+                })
+            } else {
+                Ok(ptr)
+            }
+        }};
+    } 
+\end{lstlisting}
 
 \subsection{Initialising the IOMMU}
 

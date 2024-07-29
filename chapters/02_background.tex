@@ -20,6 +20,7 @@ Memory Management Units (MMU) for the CPU have been in use since the 1980s. Afte
 The translation of these pages are stored in a page table structure. A page table structure consists of multiple tables that store parts of the physical address. Certain parts of an address are used as offset in these tables. When an address is translated, a page table walk has to performed. On a 4 level page table structure as the IOMMU uses for 4KiB pages, one address resolution uses 4 memory accesses. Thus, a page table walk is a performance costly operation. To circumvent this, there exists an Translation Lookaside Buffer (TLB). This TLB can store a certain amount of page translations, and is very performant to access. Frequent access to the same address can be done at a fraction of the time needed to perform a page table walk. If an address is not stored in the TLB, it is called a TLB miss, and the IOMMU has to perform a page table walk.
 The advantages and success of the CPUs MMU as well as the introduction of the PCIe bus specification have incentivised Hardware manufacturers to apply this concept on peripheral device busses. In 2006, Intel introduced their "Virtualization Technology for Directed I/O" (VT-d) and AMD their "AMD I/O Virtualization Technology" (AMD-Vi/IOMMU). In this thesis, the term IOMMU references both technologies.
 Using DMA Remapping (DMAR) the CPU is bypassed and the direct memory access translated by the IOMMU.
+The IOMMU paging structures are each 512 * 8 Bytes = 4kib in size. The IOMMU uses the upper portions to determine the location of the stored page tables, and the lower portion of the address as page offset. In the case of 4KiB pages its 12 bits as 2\^12 = 4096 = 4Kib, for 2MiB its 21 as 2\^21 = 2097152 = 2Mib.
 
 \begin{figure}
     \centering
@@ -27,6 +28,13 @@ Using DMA Remapping (DMAR) the CPU is bypassed and the direct memory access tran
     \caption{VT-d Paging structure for translating a 48-bit address to a 4-KByte page}
     \label{fig:pagewalk4kib}
 \end{figure}
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{figures/2mibtranslation.pdf}
+    \caption{VT-d Paging structure for translating a 48-bit address to a 2-MByte page}
+    \label{fig:pagewalk2mib}
+\end{figure}
+
 
 \section{Hugepages}
 As the demand for bigger memory mappings e.g. for big files increased, the amount of TLB cache misses rose proportionally. With the CPUs TLB having space for only 4096 4KiB pages, only an address space of 16MiB could be stored and accessed quickly. In order to increase the amount of virtual memory space, hardware producers reacted by providing bigger page sizes on their architectures than the default 4KiB. x86 architectures now normally provide 4K, 2M and 1G page sizes.
