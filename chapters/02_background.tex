@@ -21,6 +21,7 @@ The translation of these pages are stored in a page table structure. A page tabl
 The advantages and success of the CPUs MMU as well as the introduction of the PCIe bus specification have incentivised Hardware manufacturers to apply this concept on peripheral device busses. In 2006, Intel introduced their "Virtualization Technology for Directed I/O" (VT-d) and AMD their "AMD I/O Virtualization Technology" (AMD-Vi/IOMMU). In this thesis, the term IOMMU references both technologies.
 Using DMA Remapping (DMAR) the CPU is bypassed and the direct memory access translated by the IOMMU.
 The IOMMU paging structures are each 512 * 8 Bytes = 4kib in size. The IOMMU uses the upper portions to determine the location of the stored page tables, and the lower portion of the address as page offset. In the case of 4KiB pages its 12 bits as 2\^12 = 4096 = 4Kib, for 2MiB its 21 as 2\^21 = 2097152 = 2Mib.
+Mappings can be allocated using the VFIO framework.
 
 \begin{figure}
     \centering
