@@ -38,7 +38,7 @@
             % enlarge y limits = 0.1,
             every axis legend/.append style={nodes={right}},
             % legend entries={\texttt{io\_uring}, \texttt{libaio}, \texttt{psync}, vroom, SPDK},
-            legend entries={MMIO 2M, MMIO 1G, VFIO 4K, VFIO 2M, VFIO 1G},
+            legend entries={2M,  VFIO 4K, VFIO 2M, VFIO 1G},
             legend pos = north east,
             legend style={at={(0.01,0.98)}, anchor = north west},
             legend columns = 1,
@@ -47,7 +47,7 @@
         \addplot [mark=none,color=TUMRed] table[col sep=comma,x=pages,y=median] {data/pagesizemedians/pagesizemedians_mmio_2MiB.csv};
         \addplot [mark=none,color=TUMBlue] table[col sep=comma,x=pages,y=median] {data/pagesizemedians/pagesizemedians_vfio_4KiB.csv};
         \addplot [mark=none,color=TUMGreen] table[col sep=comma,x=pages,y=median] {data/pagesizemedians/pagesizemedians_vfio_2MiB.csv};
-        % \addplot [mark=none,color=TUMYellow] table[col sep=comma,x=pages,y=latency] {data/latency_medians_pagesize_full/1Gibps.csv};
+        \addplot [mark=none,color=TUMYellow] table[col sep=comma,x=pages,y=median] {data/pagesizemedians/pagesizemedians_vfio_1GiB.csv};
 
     \end{axis}
 \end{tikzpicture}

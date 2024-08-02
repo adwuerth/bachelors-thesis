@@ -15,7 +15,7 @@ As part of our error handling, we introduce an error enum variant for each sysca
 
 \begin{lstlisting}[language=Rust, label=lst:mmapmacro]
     #[macro_export]
-    macro_rules! mmap {
+    macro_rules! mmap_unsafe {
         ($addr:expr, $len:expr, $prot:expr, $flags:expr, $fd:expr, $offset:expr) => {{
             let ptr = unsafe { libc::mmap($addr, $len, $prot, $flags, $fd, $offset) };
             if ptr == libc::MAP_FAILED {
@@ -113,4 +113,19 @@ IOMMUFD has only been recently added to the Linux Kernel in December of 2022. E.
 The device file descriptor, which was previously attained with \texttt{VFIO\_GROUP\_GET\_DEVICE\_FD} can now be gotten through opening the character device /dev/vfio/devices/vfioX.
 By using this character device pointer we can claim the ownership over the VFIO device. That way VFIO does not rely on group/container/iommu drivers.
 
+\begin{figure}
+    \centering
+    \includegraphics[width=0.7\textwidth]{figures/VFIOLayer.pdf}
+    \caption{Layer diagram of Legacy VFIO, partly adopted from \cite{dpdkiommufd}}
+    \label{fig:vfio-layer}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.7\textwidth]{figures/IOMMUFDLayer.pdf}
+    \caption{Layer diagram of VFIO with IOMMUFD, partly adopted from \cite{dpdkiommufd}}
+    \label{fig:iommufd-layer}
+\end{figure}
+
 \subsection{IOAS}
+I/O Address Spaces (IOAS) is the equivalent of a VFIO container in legacy VFIO.
