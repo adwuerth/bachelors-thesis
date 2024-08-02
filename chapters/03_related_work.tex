@@ -3,5 +3,8 @@
 \section{Storage Performance Development Kit}
 The Storage Performance Development Kit (SPDK) provides ``a collection of tools and libraries for writing high performance, scalable, user-mode storage applications'' \cite{spdkindex}. It includes an user-space NVMe driver which is fast and production-ready. While this driver supports the use of the driver without the IOMMU, the SPDK Documentation recommends using the IOMMU as using VFIO and the IOMMU is the "future proof...long-term foundation" for SPDK \cite{spdkmemory}.
 
-\section{ixy}
+\section{ixy} \label{s:ixy}
 Ixy is a user space network driver for network interface cards. In the worst case a packet is 64 Bytes long and two packets fit on one 4K Page. In their implementation of IOMMU support a performance decrease of up to 75\% \cite{iommuhuber}.
+
+\section{Userspace I/O system}
+The Userspace I/O system is a framework for writing "userspace" drivers. It utilizes a small kernel module written by the driver developer, keeping the main functionality in userspace. While it is an option to consider to ease driver development, it is not a framework for developing drivers which only run in userspace.

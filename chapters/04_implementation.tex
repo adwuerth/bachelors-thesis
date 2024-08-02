@@ -73,12 +73,24 @@ Using \texttt{mmap}'s flags we can also define the page size used.
 The \texttt{MAP\_HUGETLB} flag is used in conjunction with the \texttt{MAP\_HUGE\_2MB} and \texttt{MAP\_HUGE\_1GB} flags for 2MiB and 1 GiB pages respectively.
 By default \texttt{mmap} uses the default page size of 4KiB.
 The main IOMMU work is done by then creating the map struct \texttt{vfio\_iommu\_type1\_dma\_map}. We set the DMA mapping to read and write, and provide the same IOVA as the Virtual address. By then passing it to an ioctl call with the according VFIO operation \texttt{VFIO\_IOMMU\_MAP\_DMA} we can create a mapping in the page tables of the IOMMU. This way we can give the IOVA to the NVMe controller, which it will use to access the memory through the address translation of the IOMMU.
-On \autoref{fig:vroom-graph} an I/O operation timeline graph can be seen.
+
+On \autoref{fig:vroom-graph} an I/O operation timeline graph can be seen. The timeline is described as followed:
+\begin{enumerate}
+    \item \textbf{I/O function call:} The application calls a read/write method on vroom
+    \item \textbf{Command Submission:} Vroom creates a \texttt{NvmeCommand} struct and places it on the Submission Queue head.
+    \item \textbf{Ring SQ Doorbell:} Vroom places the submission queue head address in the doorbell register. The doorbell register is part of the NVMe BAR region, which is mapped to memory.
+    \item \textbf{Take Command:} The NVMe takes the command from the SQ.
+    \item \textbf{Perform I/O:} The NVMe uses the IOMMU to access the host memory via DMA and performs the read/write command.
+    \item \textbf{Complete I/O:} The NVMe places a \texttt{NvmeCompletion} struct instance on the head of the Completion Queue.
+    \item \textbf{Polled CQ:} By polling the CQ, vroom can process the CQ entry.
+    \item \textbf{Ring CQ Doorbell:} After processing the CQ entry, vroom rings the CQ Doorbell, in order to notify the NVMe controller, that the Completion Queue has been processed.
+    \item \textbf{Notify Application:} Vroom notifies the Application of the success of the I/O operation. The application can continue running.
+\end{enumerate}
 
 \begin{figure}
     \centering
-    \includegraphics[width=\textwidth]{figures/vroomgraphlight.png}
-    \caption{I/O operation vroom}
+    \includegraphics[width=\textwidth]{figures/vroomdiagram.pdf}
+    \caption{I/O operation using vroom with enabled IOMMU}
     \label{fig:vroom-graph}
 \end{figure}
 

@@ -30,13 +30,22 @@ This test uses one buffer from which the NVMe driver reads/writes to. This buffe
 \section{IOTLB}
 As the size of the IOTLB is not stated in hardware and VT-d specifications, we use a latency test to see the behaviour of the IOMMU. We can assume that the IOTLB entry count must be a power of two. In order to isolate the effect of the IOMMU we use the median of random write latencies on the emptied NVMe. We use a test that repetitly writes one byte to the ssd from to 8, 16, 32, 64, ... pages. Taking the median and comparing them we can figure out where a latency spike occurs and can then derive the IOTLB size. We configure the queues, buffer and prp-list to each take up one page, resulting in 6 allocated pages before the actual workload. This test is done using memory-mapped I/O and the IOMMU with 4Kib and 2Mib pages.
 In order to test 1GiB pages, we first need to increase the ulimit settings, as memlock limits the amount of locked-in-memory address space.
-On the resulting graph \autoref{fig:med-ps} we can observe a performance spike of around 200 nanoseconds for each write between 128 and 256 allocated pages.
+On the resulting graph \autoref{fig:med-ps} we can observe a performance spike of around 300 nanoseconds for each write between 128 and 256 allocated pages. In the case of 4KiB pages, this is a memory size of only 512 KiB.
 
 \begin{figure}
     \centering
-    \includegraphics[width=\textwidth]{figures/latency_ps_medians_full}
+    \includegraphics[width=\textwidth]{figures/pagesizemedians}
     \caption{Pagesize Medians}
     \label{fig:med-ps}
+\end{figure}
+
+Using multithreaded random writes with queue deoth, we can see up to 10\% less performance using 4KiB pages.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{figures/qd1tnrandwrite}
+    \caption{Pagesize Medians}
+    \label{fig:qd1tn}
 \end{figure}
 
 

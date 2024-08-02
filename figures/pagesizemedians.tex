@@ -13,14 +13,14 @@
 \begin{tikzpicture}
     \begin{axis}[
             % yscale=0.5,
-            height=5cm,
-            width=10cm,
-            xmin=8,xmax=2048,
+            height=8cm,
+            width=14cm,
+            xmin=16,xmax=2048,
             xtick=data,
             xmode = log,
             xlabel={Pages},
-            xtick={8,16,32,64,128,256,512, 1024, 2048},
-            xticklabels={8,16,32,64,128,256,512,1024,2048},
+            xtick={16,32,64,128,256,512,1024, 2048},
+            xticklabels={16,32,64,128,256,512,1024,2048},
             ymin=8600,ymax=9050,
             ylabel style={align=center},
             ylabel={Latency in ns},
@@ -38,16 +38,16 @@
             % enlarge y limits = 0.1,
             every axis legend/.append style={nodes={right}},
             % legend entries={\texttt{io\_uring}, \texttt{libaio}, \texttt{psync}, vroom, SPDK},
-            legend entries={MMIO, VFIO 4K, VFIO 2M},
+            legend entries={MMIO 2M, MMIO 1G, VFIO 4K, VFIO 2M, VFIO 1G},
             legend pos = north east,
             legend style={at={(0.01,0.98)}, anchor = north west},
             legend columns = 1,
         ]
 
-
-        \addplot [mark=none,color=TUMRed] table[col sep=comma,x=pages,y=latency] {data/latency_medians_pagesize/MMIO.csv};
-        \addplot [mark=none,color=TUMBlue] table[col sep=comma,x=pages,y=latency] {data/latency_medians_pagesize/4Kibps.csv};
-        \addplot [mark=none,color=TUMGreen] table[col sep=comma,x=pages,y=latency] {data/latency_medians_pagesize/2Mibps.csv};
+        \addplot [mark=none,color=TUMRed] table[col sep=comma,x=pages,y=median] {data/pagesizemedians/pagesizemedians_mmio_2MiB.csv};
+        \addplot [mark=none,color=TUMBlue] table[col sep=comma,x=pages,y=median] {data/pagesizemedians/pagesizemedians_vfio_4KiB.csv};
+        \addplot [mark=none,color=TUMGreen] table[col sep=comma,x=pages,y=median] {data/pagesizemedians/pagesizemedians_vfio_2MiB.csv};
+        % \addplot [mark=none,color=TUMYellow] table[col sep=comma,x=pages,y=latency] {data/latency_medians_pagesize_full/1Gibps.csv};
 
     \end{axis}
 \end{tikzpicture}
