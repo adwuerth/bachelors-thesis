@@ -8,25 +8,40 @@ Both systems run Ubuntu 23.10.
 \begin{table}
     \centering
     \begin{tabular}{lllrll}
-        \textbf{CPU}                        & \textbf{Year}                         & \textbf{Arch.}  & \textbf{Memory} & \textbf{NVMe} & \textbf{Count} \\
+        \textbf{CPU}                          & \textbf{Year}         & \textbf{Memory}                       & \textbf{NVMe}                         & \textbf{Count}   \\
         \toprule
 
-        \multirow{2}{*}{Intel Xeon E5-2660} & \multirow{2}{*}{2012}                 &
-        \multirow{2}{*}{Sandy Bridge}       & \multirow{2}{*}{\SI{256}{\giga\byte}} & Samsung Evo 970 &
-        \multirow{2}{*}{1}                                                                                                                               \\
-                                            &                                       &                 &                 & Plus NVMe     &                \\ \hline
+        \multirow{2}{*}{Intel Xeon E5-2660v2} & \multirow{2}{*}{2012} & \multirow{2}{*}{\SI{256}{\giga\byte}} & \multirow{2}{*}{Samsung Evo 970 Plus} &
+        \multirow{2}{*}{1}                                                                                                                                               \\
+                                              &                       &                                       &                                       &                & \\ \hline
 
-        \multirow{2}{*}{AMD Epyc ...}       & \multirow{2}{*}{2014}                 &
-        \multirow{2}{*}{AMD arch}           & \multirow{2}{*}{\SI{1}{\tera\byte}}   & Samsung PM9A3   &
-        \multirow{2}{*}{8}                                                                                                                               \\
-                                            &                                       &                 &                 & NVMe          &                \\
+        \multirow{2}{*}{AMD EPYC 7713}        & \multirow{2}{*}{2021} & \multirow{2}{*}{\SI{1}{\tera\byte}}   & \multirow{2}{*}{Samsung PM9A3}        &
+        \multirow{2}{*}{8}                                                                                                                                               \\
+                                              &                       &                                       &                                       &                & \\
         \bottomrule
     \end{tabular}
 
-    \caption{System configurations of servers used for performance analysis.}
+    \caption{Specifications of systems used in performance testing}
     \label{tab:servers}
 \end{table}
 
+\begin{table}
+    \centering
+    \begin{tabular}{llrrrr}
+        \multirow{2}{*}{\textbf{CPU}}   & \multirow{2}{*}{\textbf{Clock}}          &
+        \multirow{2}{*}{\textbf{Cores}} & \multirow{2}{*}{\textbf{Virtualization}}              \\
+                                        &                                          &    &       \\
+        \toprule
+
+        Intel Xeon E5-2660v2            & \SI{2.2}{\giga\Hz}                       & 10 & VT-d  \\
+        AMD EPYC 7713                   & \SI{2.0}{\giga\Hz}                       & 64 & AMD-V \\
+
+        \bottomrule
+    \end{tabular}
+
+    \caption{CPUs of the systems}
+    \label{tab:cpus}
+\end{table}
 
 % IOMMU specs, processor, ...
 
