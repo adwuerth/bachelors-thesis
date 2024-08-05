@@ -1,7 +1,7 @@
 \chapter{Related Work}
 
 \section{Storage Performance Development Kit}
-The Storage Performance Development Kit (SPDK) provides ``a collection of tools and libraries for writing high performance, scalable, user-mode storage applications'' \cite{spdkindex}. It includes an user-space NVMe driver which is fast and production-ready. While this driver supports the use of the driver without the IOMMU, the SPDK Documentation recommends using the IOMMU as using VFIO and the IOMMU is the "future proof...long-term foundation" for SPDK \cite{spdkmemory}.
+NVMe is a storage protocol which is widely used, modern and highly performant. Therefore it is a protocol for which many drivers have been written, including userspace drivers. The Storage Performance Development Kit (SPDK) provides ``a collection of tools and libraries for writing high performance, scalable, user-mode storage applications'' \cite{spdkindex}. It includes an user-space NVMe driver which is fast and production-ready. While this driver supports the use of the driver without the IOMMU, the SPDK Documentation recommends using the IOMMU as using VFIO and the IOMMU is the "future proof...long-term foundation" for SPDK \cite{spdkmemory}. Even though SPDK is the established userspace NVMe driver option, the drawbacks include its high complexity even for simple applications, as well as it being written in C.
 
 \section{ixy} \label{s:ixy}
 Ixy is a user space network driver for network interface cards. In the worst case a packet is 64 Bytes long and two packets fit on one 4K Page. In their implementation of IOMMU support a performance decrease of up to 75\% \cite{iommuhuber}.
@@ -11,3 +11,7 @@ The Userspace I/O system is a framework for writing "userspace" drivers. It util
 
 \section{RNVMe}
 The Rust NVMe driver (RNVMe) is a Rust kernel-space driver intended for the Linux kernel as part of the Rust for Linux project \cite{rnvmedriver}.
+
+\section{Micron UNVMe}
+
+\section{Samsung UNVMe}

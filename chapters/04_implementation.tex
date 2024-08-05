@@ -2,7 +2,7 @@
 
 \section{Virtual Function I/O}
 Virtual Function I/O (VFIO) is an IOMMU agnostic framework for exposing devices to userspace.
-The VFIO driver binds to the PCI device and manages address translation through the IOMMU.
+VFIO consists of two parts, the \texttt{vfio-pci} driver and an IOMMU API (\texttt{vfio\_iommu\_type1}). The VFIO PCI driver can be bound to a PCI device. This allows using \texttt{mmap(2)} to map the PCI device registers into memory. The type1 VFIO IOMMU API is used for mapping and unmapping address translations in the IOMMU. Alternatively, the IOMMUFD API can be used instead of the container API, which currently is not feature complete, but will eventually replace the container based solution \cite{vfiokerneldocs}.
 This allows the driver to be safe and non-privileged in comparison to directly mapping the device memory to userspace.
 Using the VFIO works by using ioctl system calls.
 While there is Rust's extensive \texttt{libc} library providing the system calls \texttt{ioctl} and \texttt{mmap} and their flags, the Linux \texttt{vfio.h} constants and structs need to either be defined manually or with a crate like bindgen, which automates bindings for C and C++ libraries \cite{cratebindgen}. To keep the binary and dependency list as small as possible we chose the manual implementation.
@@ -107,11 +107,12 @@ To further reduce overhead from the IOMMU Containers are used in VFIO, which can
 In our implementation we use one group and container each for our NVMe device.
 
 \section{IOMMUFD}
-The IOMMU File Descriptor user API (IOMMUFD) offers a way of controlling the IOMMU subsystem using file descriptors in user-space \cite{iommufdkerneldocs}.
+The IOMMU File Descriptor user API (IOMMUFD) offers a way of controlling the IOMMU subsystem using file descriptors in user-space \cite{iommufdkerneldocs}. It replaces the VFIO IOMMU API using containers with the IOMMUFD API.
 It allows management of I/O address spaces (IOAS), enabling mapping user space memory on the IOMMU.
-IOMMUFD has only been recently added to the Linux Kernel in December of 2022. E.g. Debian 12 does not include it, Fedora 40 does, but it is not enabled in the kernel configuration. Considering that it is not widely available or enabled on many distributions, our driver offers both options of using the IOMMU. The performance tests are done using the 'legacy' VFIO-only way, but it can be assumed that the framework/user api does not have a noteworthy performance impact.
+IOMMUFD has only been recently added to the Linux Kernel in December 2022. E.g. Debian 12 does not include it, Fedora 40 does, but it is not enabled in the kernel configuration. Considering that it is not widely available or enabled on many distributions, our driver offers both options of using the IOMMU. The performance tests are done using the 'legacy' VFIO container way.
 The device file descriptor, which was previously attained with \texttt{VFIO\_GROUP\_GET\_DEVICE\_FD} can now be gotten through opening the character device /dev/vfio/devices/vfioX.
 By using this character device pointer we can claim the ownership over the VFIO device. That way VFIO does not rely on group/container/iommu drivers.
+I/O Address Spaces (IOAS) are the equivalent to a VFIO container in legacy VFIO.
 
 \begin{figure}
     \centering
@@ -127,5 +128,4 @@ By using this character device pointer we can claim the ownership over the VFIO 
     \label{fig:iommufd-layer}
 \end{figure}
 
-\subsection{IOAS}
-I/O Address Spaces (IOAS) is the equivalent of a VFIO container in legacy VFIO.
+
