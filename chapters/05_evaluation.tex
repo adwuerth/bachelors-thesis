@@ -3,8 +3,8 @@ In this chapter, we analyse the performance impact of the IOMMU, directly compar
 
 \section{Setup}
 We benchmark the performance of the driver on two systems.
-Both systems run Ubuntu 23.10, with Linux kernel version 6.5.0-42.
-Even though the NVMe Specification supports up to 65536 I/O queues, most "good" SSDs have a maximum of around 64 I/O queues. We use 1 thread per 1 I/O queue in our multithreaded tests.
+Both systems run Ubuntu 23.10 with Linux kernel version 6.5.0-42.
+Even though the NVMe Specification supports up to 65536 I/O queues, our SSDs have a maximum of around 64 I/O queues, which seems to be a common amount. We use 1 thread per 1 I/O queue in our multithreaded tests. Additionally, all standard tests are run with the \texttt{iommu=nomerge} kernel parameter to prevent the IOMMU from merging entries together, which can influence the results.
 
 \begin{table}
     \centering
@@ -64,10 +64,10 @@ Even though the NVMe Specification supports up to 65536 I/O queues, most "good" 
 
 % IOMMU specs, processor, ...
 
-As Linux as well as our IOMMU supports 4KiB, 2MiB and 1GiB page sizes we will test and analyse how it affects the overall performance.
+As Linux as well as our IOMMU supports \qty{4}{\kibi\byte}, \qty{2}{\mebi\byte} and \qty{1}{\gibi\byte} page sizes we will test and analyse how it affects the overall performance.
 
 \section{Overall Latency and Throughput}
-First, we will compare the VFIO implementation to the MMIO implementation using latency and throughput tests. In these tests, we repeatedly write/read from a 4KiB buffer in the memory. Each I/O operation uses a 4KiB unit size.
+First, we will compare the VFIO implementation to the MMIO implementation using latency and throughput tests. In these tests, we repeatedly write/read from a \qty{4}{\kibi\byte} buffer in the memory. Each I/O operation uses a \qty{4}{\kibi\byte} unit size.
 
 In these tests, we can see that there is practically a negligable amount of overhead. As this test only uses a one page buffer at maximum, the buffer is constantly stored in the IOTLB.
 
@@ -89,23 +89,38 @@ This test uses one buffer from which the NVMe driver reads/writes to. This buffe
 \end{figure}
 
 \section{IOTLB}
-As the size of the IOTLB is not stated in hardware and VT-d specifications, we use a latency test to analyse the behaviour of the IOMMU. We can assume that the IOTLB entry count must be a power of two. In order to isolate the effect of the IOMMU we use the median of 1 Byte random write latencies on the emptied NVMe. We repeatedly Write to a number of pages that is an increasing power of two. Taking the median and comparing them we can figure out where a latency spike occurs and can then derive the IOTLB size. We configure the queues, buffer and prp-list to each take up one page, resulting in 6 allocated pages before the actual workload. This test is done using without the IOMMU with 2MiB pages and the IOMMU with 4KiB, 2MiB and 1GiB pages. In order to test 1GiB pages, we first need to increase the ulimit settings, as memlock limits the amount of locked-in-memory address space.
+As the size of the IOTLB is not stated in hardware and VT-d specifications, we use a latency test to analyse the behaviour of the IOMMU. We can assume that the IOTLB entry count must be a power of two. In order to isolate the effect of the IOMMU we use the median of 1 Byte random write latencies on the emptied NVMe. We repeatedly Write to a number of pages that is an increasing power of two. Taking the median and comparing them we can figure out where a latency spike occurs and can then derive the IOTLB size. We configure the queues, buffer and prp-list to each take up one page, resulting in 6 allocated pages before the actual workload. This test is done using without the IOMMU with \qty{2}{\mebi\byte} pages and the IOMMU with \qty{4}{\kibi\byte}, \qty{2}{\mebi\byte} and \qty{1}{\gibi\byte} pages. In order to test \qty{1}{\gibi\byte} pages, we first need to increase the ulimit settings, as memlock limits the amount of locked-in-memory address space.
 
-In the resulting graph \autoref{fig:med-ps} we can observe a performance spike of around 300 nanoseconds for each write between 128 and 256 allocated pages. In the case of 4KiB pages, this is a memory size of only 512 KiB. Using this information, we can assume that the IOTLB has the same size for each pagesize, as well as it being 128 entries of size.
+\paragraph{Results of System 1}
+
+In the resulting graph \autoref{fig:med-ps} we can observe a performance spike of around 300 nanoseconds for each write between 128 and 256 allocated pages. In the case of \qty{4}{\kibi\byte} pages, this is a memory size of only 512 KiB. Using this information, we can assume that the IOTLB has the same size for each pagesize, as well as it being 128 entries of size.
 
 \begin{figure}
     \centering
     \includegraphics[width=\textwidth]{figures/psmeds}
-    \caption{Pagesize Medians}
+    \caption{Pagesize Medians on System 1}
     \label{fig:med-ps}
 \end{figure}
 
-When using multithreaded random writes with queue depth 1, in \autoref{fig:qd1tn-1page} we can mostly see the same performance for 1 page, until 32 threads. This is because we allocate a buffer for each thread. For each thread, the submission queue, the completion queue and the buffer take up each one entry of the IOTLB. Therefore, with 32 threads we use 96 pages, exceeding the 64 entries we can store in the IOTLB.
+\paragraph{Results of System 2}
+
+On the AMD IOMMU, we can see a performance spike that occurs at 64-128 pages for \qty{2}{\mebi\byte} and \qty{1}{\gibi\byte} page sizes and at 256-512 pages. We can therefore assume that the IOTLB size depends on the pagesize unlike on the Intel CPU. The performance itself only decreases by about \qty{60}{ns}, which is a five fold performance increase of page walks compared to system 1.
 
 \begin{figure}
     \centering
-    \subcaptionbox {1 4KiB buffer per thread} {\includegraphics[width=\textwidth]{figures/qd1tn_1page} \label{fig:qd1tn-1page}}
-    \subcaptionbox {1 2MiB buffer per thread} {\includegraphics[width=\textwidth]{figures/qd1tn_512page} \label{fig:qd1tn-512page}}
+    \includegraphics[width=\textwidth]{figures/psmedsepyc}
+    \caption{Pagesize Medians on System 2}
+    \label{fig:med-psepyc}
+\end{figure}
+
+\section{Multithreaded Random Writes}
+
+When using multithreaded random writes with queue depth 1, in \autoref{fig:qd1tn} we can mostly see the same performance for 1 page, until 32 threads. This is because we allocate a buffer for each thread. For each thread, the submission queue, the completion queue and the buffer take up each one entry of the IOTLB. Therefore, with 32 threads we use 96 pages, exceeding the 64 entries we can store in the IOTLB. Using a \qty{2}{\mebi\byte} buffer, we see around 10\% less performance using \qty{4}{\kibi\byte} pages, as even with one thread, the page count exceeds the possible entries in the IOTLB. The performance of the \qty{2}{\mebi\byte} Vfio implementation stays the same as with 1 \qty{4}{\kibi\byte} buffer, as the \qty{2}{\mebi\byte} buffer fits in one IOTLB entry.
+
+\begin{figure}
+    \centering
+    \subcaptionbox {1 \qty{4}{\kibi\byte} buffer per thread} {\includegraphics[width=0.75\textwidth]{figures/qd1tn_1page}}
+    \subcaptionbox {1 \qty{2}{\mebi\byte} buffer per thread} {\includegraphics[width=0.75\textwidth]{figures/qd1tn_512page}}
     \caption{QD1 Random Write Throughput with multithreading}
     \label{fig:qd1tn}
 \end{figure}
@@ -113,8 +128,8 @@ When using multithreaded random writes with queue depth 1, in \autoref{fig:qd1tn
 \section{IOMMU modes}
 There are a couple of kernel parameters that can be set at boot-time to influence the behaviour of the IOMMU. The availability is influenced by the iommu manufacturer, e.g. theres \texttt{amd\_iommu} and \texttt{intel\_iommu}, as well as the CPU architecture. Many of these manufacturer dependent options are either very specific, or shared behaviour is ported to the general iommu parameter, e.g. \texttt{amd\_iommu=fullflush} and \texttt{intel\_iommu=strict}. We will be mainly looking at the general options \texttt{iommu}.
 
-noats -> disable pcie ats and iotlb
-
 \paragraph{Strict}
+To enable strict IOMMU mode, \texttt{iommu.strict=1} has to be set. Using strict mode, unmapping operation cause a complete IOTLB invalidation. Using relaxed mode, unmapping operations can be deferred and batched. This increases performance as an invalidation completely clears the IOTLB buffer, but reduces device isolation.
 
 \paragraph{Passthrough}
+Passthrough mode can be enabled using \texttt{iommu.passthrough=1}. Using passthrough DMA operations bypass the translation of the IOMMU, and instead directly access physical memory.

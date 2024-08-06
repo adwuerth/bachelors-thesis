@@ -2,8 +2,9 @@
 
 \section{vroom}
 Vroom is a userspace NVMe driver written in Rust. While it is not production ready at the time of writing, it already provides good performance and the functionality needed for general I/O operations. In comparison to an interrupt driven driver, vroom uses polling to determine the state of the I/O operations. As interrupts are very performance intensive operations, polling can often be better in high-performance environments \cite{spdksubmitting}.
+
 A NVMe driver consists of submission and completion queues, implemented as ring buffers. The driver adds commands to the submission queue, which the NVMe controller reads and executes. The executed command gets placed on a corresponding completion queue.
-We unbind the kernel driver and bind it to pci-stub. Pci-stub does not do anything but occupy the pci-driver such that the kernel or another application can not bind to the device.
+We unbind the kernel driver and bind it to pci-stub. Pci-stub does not do anything but occupy the pci-driver such that the kernel or another application can not bind to the device. A deeper explanation of the steps will be done in Chapter \autoref{c:impl}.
 A sequential vroom I/O operation work as followed:
 \begin{itemize}
     \item \textbf{Issue Command:} The application using the driver calls an I/O method on the driver.
@@ -70,7 +71,7 @@ vroom currently uses hugepages and locks them using mlock to prevent the Kernel 
 For accessing the devices memory as well as the device accessing the host memory, it is necessary to either use the physical addresses and compromise on safety and use root privileges or use the IOMMU for virtualization, which can introduce performance overhead.
 
 \section{Peripheral Component Interconnect Express}
-\paragraph{Address Translation Service}
+
 
 
 \subsection{Character and Block Devices}

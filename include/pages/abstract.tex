@@ -3,7 +3,7 @@
 The research into direct memory access in the userspace has increased over the latest years especially in the field of virtualization.
 The main reason for this is the need for high performance and low latency in virtualized environments.
 The hardware that enables this is called the IOMMU. Through the IOMMU, the guest operating system can directly access the hardware without the need for the hypervisor to intervene.
-This technology is not bound to only virtualization, but can also be used for high-performance drivers.
-In the past, the IOMMU was only accessible through the kernel, but with the introduction of the \textit{Intel VT-d} and \textit{AMD-Vi} extensions, the IOMMU can now be accessed from the userspace.
-The VFIO framework and the IOMMUFD user API build the foundation for this.
+This technology is not bound to only virtualization, but can also be used for high-performance userspace drivers.
+Using VFIO, a framework for using the IOMMU to directly accessing memory through the IOMMU in userspace.
 We aim to achieve the same performance and low latency as directly mapping the hardware into the guest operating system, while increasing the security of the system.
+This thesis explores the performance impact of the IOMMU comparing it to using a physical address DMA approach. To test the performance IOMMU support for a Rust userspace NVMe driver is implemented.
