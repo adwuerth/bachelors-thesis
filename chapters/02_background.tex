@@ -24,8 +24,8 @@ The advantages and success of the CPUs MMU as well as the introduction of the PC
 
 \begin{figure}
     \centering
-    \includegraphics[width=0.5\textwidth]{figures/MMUIOMMU.pdf}
-    \caption{MMU and IOMMU relation to memory}
+    \includegraphics[width=0.6\textwidth]{figures/MMUIOMMU.pdf}
+    \caption{MMU and IOMMU relation to physical memory, adapted from \cite{iommuscalability}}
     \label{fig:mmuvsiommu}
 \end{figure}
 
@@ -33,16 +33,18 @@ Using DMA Remapping (DMAR) the CPU is bypassed and the direct memory access tran
 The IOMMU paging structures consist of 4KiB page tables storing 512 8-byte entries. The IOMMU uses the upper portions to determine the location of the stored page tables, and the lower portion of the address as page offset. In the case of \qty{4}{\kibi\byte} pages its 12 bits, for 2MiB its 21.
 Mappings can be allocated using the VFIO framework.
 
+% todo maybe add amd-v figure
+
 \begin{figure}
     \centering
     \includegraphics[width=\textwidth]{figures/4kibtranslation.pdf}
-    \caption{VT-d Paging structure for translating a 48-bit address to a \qty{4}{\kibi\byte} page}
+    \caption{VT-d Paging structure for translating a 48-bit address to a \qty{4}{\kibi\byte} page, grabbed from \cite{vtdspec}}
     \label{fig:pagewalk4kib}
 \end{figure}
 \begin{figure}
     \centering
     \includegraphics[width=\textwidth]{figures/2mibtranslation.pdf}
-    \caption{VT-d Paging structure for translating a 48-bit address to a \qty{2}{\mebi\byte} page}
+    \caption{VT-d Paging structure for translating a 48-bit address to a \qty{2}{\mebi\byte} page, grabbed from \cite{vtdspec}}
     \label{fig:pagewalk2mib}
 \end{figure}
 
@@ -71,8 +73,22 @@ vroom currently uses hugepages and locks them using mlock to prevent the Kernel 
 For accessing the devices memory as well as the device accessing the host memory, it is necessary to either use the physical addresses and compromise on safety and use root privileges or use the IOMMU for virtualization, which can introduce performance overhead.
 
 \section{Peripheral Component Interconnect Express}
+PCIe is a standard for peripheral device busses. Each device on the PCI bus has a unique PCI address, which is segmented into for parts, as seen in \autoref{fig:pciaddress}. The domain refers to the PCI domain. Modern systems can have multiple PCI domains, but in most systems this value is \texttt{0000}. The Bus segment is the PCI bus number, this value can be between \texttt{00} and \texttt{FF}, allowing for a maximum of 256 busses. The next segment is the device
 
+% todo rework
 
+\begin{enumerate}
+    \item \textbf{Bus: } The Bus number is the ID of the PCI bus on a system. This value can be inbetween \texttt{00} and \texttt{FF}, allowing for a maximum of 256 busses.
+    \item \textbf{Device: } Each bus can contain a maximum of 32 devices. This value can reach from \texttt{00} to \texttt{1F}.
+    \item \textbf{Function: } Each device can contain up to 8 functions (\texttt{7} maximum).
+\end{enumerate}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{figures/PCIAddress.pdf}
+    \caption{Segments of a PCI address and their meaning}
+    \label{fig:pciaddress}
+\end{figure}
 
 \subsection{Character and Block Devices}
 Unix/Linux use two types of devices: Character and Block devices. Character devices are used for devices with small amounts of data and no frequent seek queries, like keyboard and mouse. Block devices on the other hand have a large data volumes, which are organized in blocks and where search is common, like harddrives and ram disks.

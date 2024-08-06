@@ -4,21 +4,23 @@ In this chapter, we analyse the performance impact of the IOMMU, directly compar
 \section{Setup}
 We benchmark the performance of the driver on two systems.
 Both systems run Ubuntu 23.10 with Linux kernel version 6.5.0-42.
-Even though the NVMe Specification supports up to 65536 I/O queues, our SSDs have a maximum of around 64 I/O queues, which seems to be a common amount. We use 1 thread per 1 I/O queue in our multithreaded tests. Additionally, all standard tests are run with the \texttt{iommu=nomerge} kernel parameter to prevent the IOMMU from merging entries together, which can influence the results.
+Even though the NVMe Specification supports up to 65536 I/O queues, our SSDs have a maximum of around 64 I/O queues, which seems to be a common amount. We use 1 thread per 1 I/O queue in our multithreaded tests. Turbowrite is a Samsung technology which drastically speeds up write latencies the so called "Turbowrite" buffer with the size of \qty{42}{\giga\byte} of the NVMe, as shown in \cite{vroom}. In order to use the Turbowrite NVMe to its maximum potential, most tests are conducted in said buffer to avoid the NVMe being the bottleneck instead of the IOMMU.
+
+Additionally, all standard tests are run with the \texttt{iommu=nomerge} kernel parameter to prevent the IOMMU from merging entries together, which can influence the results.
 
 \begin{table}
     \centering
     \begin{tabular}{lllrll}
-        \textbf{CPU}                          & \textbf{Memory}                        & \textbf{NVMe}                         & \textbf{Capacity}                       & \textbf{Count}   \\
+        \textbf{CPU}                          & \textbf{Memory}                         & \textbf{NVMe}                         & \textbf{Capacity}                       & \textbf{Count}   \\
         \toprule
 
-        \multirow{2}{*}{Intel Xeon E5-2660v2} & \multirow{2}{*}{\qty{256}{\giga\byte}} & \multirow{2}{*}{Samsung Evo 970 Plus} & \multirow{2}{*}{\qty{1}{\tera\byte}}    &
-        \multirow{2}{*}{1}                                                                                                                                                                  \\
-                                              &                                        &                                       &                                         &                & \\ \hline
+        \multirow{2}{*}{Intel Xeon E5-2660v2} & \multirow{2}{*}{\qty{251}{\gibi\byte}}  & \multirow{2}{*}{Samsung Evo 970 Plus} & \multirow{2}{*}{\qty{1}{\tera\byte}}    &
+        \multirow{2}{*}{1}                                                                                                                                                                   \\
+                                              &                                         &                                       &                                         &                & \\ \hline
 
-        \multirow{2}{*}{AMD EPYC 7713}        & \multirow{2}{*}{\qty{1}{\tera\byte}}   & \multirow{2}{*}{Samsung PM9A3}        & \multirow{2}{*}{\qty{1.92}{\tera\byte}} &
-        \multirow{2}{*}{8}                                                                                                                                                                  \\
-                                              &                                        &                                       &                                         &                & \\
+        \multirow{2}{*}{AMD EPYC 7713}        & \multirow{2}{*}{\qty{1007}{\gibi\byte}} & \multirow{2}{*}{Samsung PM9A3}        & \multirow{2}{*}{\qty{1.92}{\tera\byte}} &
+        \multirow{2}{*}{8}                                                                                                                                                                   \\
+                                              &                                         &                                       &                                         &                & \\
         \bottomrule
     \end{tabular}
 
@@ -34,8 +36,8 @@ Even though the NVMe Specification supports up to 65536 I/O queues, our SSDs hav
                                       &                                 &                                 &                                          &                                \\
         \toprule
 
-        Intel Xeon E5-2660v2          & \SI{2.2}{\giga\Hz}              & 10                              & VT-d                                     & 2012                           \\
-        AMD EPYC 7713                 & \SI{2.0}{\giga\Hz}              & 64                              & AMD-V                                    & 2021                           \\
+        Intel Xeon E5-2660v2          & \qty{2.2}{\giga\Hz}             & 10                              & VT-d                                     & 2012                           \\
+        AMD EPYC 7713                 & \qty{2.0}{\giga\Hz}             & 64                              & AMD-V                                    & 2021                           \\
 
         \bottomrule
     \end{tabular}
@@ -47,13 +49,12 @@ Even though the NVMe Specification supports up to 65536 I/O queues, our SSDs hav
 \begin{table}
     \centering
     \begin{tabular}{lrrll}
-        \multirow{2}{*}{\textbf{NVMe}} & \multirow{2}{*}{\textbf{Max. Queues}} & \multirow{2}{*}{\textbf{Max. Queue Size}} & \multirow{2}{*}{\textbf{Turbowrite}} & \multirow{2}{*}{\textbf{Usage}}
-        \\
-                                       &                                       &                                           &                                      &                                 \\
+        \multirow{2}{*}{\textbf{NVMe}} & \textbf{Maximum}     & \textbf{Maximum}    & \multirow{2}{*}{\textbf{Turbowrite}} & \multirow{2}{*}{\textbf{Usage}} \\
+                                       & \textbf{Queue Count} & \textbf{Queue Size} &                                      &                                 \\
         \toprule
 
-        Samsung Evo 970 Plus           & 64                                    & 16384                                     & Yes                                  & PCs                             \\
-        Samsung PM9A3                  & 64                                    & 16384                                     & No                                   & Server                          \\
+        Samsung Evo 970 Plus           & 64                   & 16384               & Yes                                  & Consumer                        \\
+        Samsung PM9A3                  & 64                   & 16384               & No                                   & Enterprise                      \\
 
         \bottomrule
     \end{tabular}
@@ -89,27 +90,27 @@ This test uses one buffer from which the NVMe driver reads/writes to. This buffe
 \end{figure}
 
 \section{IOTLB}
-As the size of the IOTLB is not stated in hardware and VT-d specifications, we use a latency test to analyse the behaviour of the IOMMU. We can assume that the IOTLB entry count must be a power of two. In order to isolate the effect of the IOMMU we use the median of 1 Byte random write latencies on the emptied NVMe. We repeatedly Write to a number of pages that is an increasing power of two. Taking the median and comparing them we can figure out where a latency spike occurs and can then derive the IOTLB size. We configure the queues, buffer and prp-list to each take up one page, resulting in 6 allocated pages before the actual workload. This test is done using without the IOMMU with \qty{2}{\mebi\byte} pages and the IOMMU with \qty{4}{\kibi\byte}, \qty{2}{\mebi\byte} and \qty{1}{\gibi\byte} pages. In order to test \qty{1}{\gibi\byte} pages, we first need to increase the ulimit settings, as memlock limits the amount of locked-in-memory address space.
+As the size of the IOTLB is not stated in hardware and VT-d specifications, we use a latency test to analyse the behaviour of the IOMMU. We can assume that the IOTLB entry count must be a power of two. In order to isolate the effect of the IOMMU we aim to analyse the latencies of the fastest operation the NVMe can perform. The fastest operation is using random writes with the smallest blocksize of \qty{512}{\byte} on an empty NVMe drive. We repeatedly perform this operation on a number of pages that is an increasing power of two. Taking the median and comparing them we can figure out where a latency spike occurs and can then derive the IOTLB size. We configure the queues, buffer and prp-list to each take up one page, resulting in 6 allocated pages before the actual workload. This test is done using without the IOMMU with \qty{2}{\mebi\byte} pages and the IOMMU with \qty{4}{\kibi\byte}, \qty{2}{\mebi\byte} and \qty{1}{\gibi\byte} pages. In order to test \qty{1}{\gibi\byte} pages, we first need to increase the ulimit settings, as memlock limits the amount of locked-in-memory address space.
 
-\paragraph{Results of System 1}
+\paragraph{Results of Intel Xeon}
 
 In the resulting graph \autoref{fig:med-ps} we can observe a performance spike of around 300 nanoseconds for each write between 128 and 256 allocated pages. In the case of \qty{4}{\kibi\byte} pages, this is a memory size of only 512 KiB. Using this information, we can assume that the IOTLB has the same size for each pagesize, as well as it being 128 entries of size.
 
 \begin{figure}
     \centering
     \includegraphics[width=\textwidth]{figures/psmeds}
-    \caption{Pagesize Medians on System 1}
+    \caption{Latencies of random writes on an emtied SSD with increasing host memory pages on the Intel system}
     \label{fig:med-ps}
 \end{figure}
 
-\paragraph{Results of System 2}
+\paragraph{Results of AMD Epyc}
 
 On the AMD IOMMU, we can see a performance spike that occurs at 64-128 pages for \qty{2}{\mebi\byte} and \qty{1}{\gibi\byte} page sizes and at 256-512 pages. We can therefore assume that the IOTLB size depends on the pagesize unlike on the Intel CPU. The performance itself only decreases by about \qty{60}{ns}, which is a five fold performance increase of page walks compared to system 1.
 
 \begin{figure}
     \centering
     \includegraphics[width=\textwidth]{figures/psmedsepyc}
-    \caption{Pagesize Medians on System 2}
+    \caption{Latencies of random writes on an emtied SSD with increasing host memory pages on the AMD system}
     \label{fig:med-psepyc}
 \end{figure}
 

@@ -116,16 +116,8 @@ I/O Address Spaces (IOAS) are the equivalent to a VFIO container in legacy VFIO.
 
 \begin{figure}
     \centering
-    \includegraphics[width=0.7\textwidth]{figures/VFIOLayer.pdf}
-    \caption{Layer diagram of Legacy VFIO, partly adopted from \cite{dpdkiommufd}}
-    \label{fig:vfio-layer}
+    \subcaptionbox {VFIO with Containers} {\includegraphics[width=0.67\textwidth]{figures/VFIOLayer.pdf} \label{fig:layer-vfio}}
+    \subcaptionbox {VFIO with IOMMUFD (IOAS)} {\includegraphics[width=0.67\textwidth]{figures/IOMMUFDLayer.pdf} \label{fig:layer-iommufd}}
+    \caption{Layer diagrams of VFIO with VFIO Container API and IOMMUFD, partly adopted from \cite{dpdkiommufd}}
+    \label{fig:clayer}
 \end{figure}
-
-\begin{figure}
-    \centering
-    \includegraphics[width=0.7\textwidth]{figures/IOMMUFDLayer.pdf}
-    \caption{Layer diagram of VFIO with IOMMUFD, partly adopted from \cite{dpdkiommufd}}
-    \label{fig:iommufd-layer}
-\end{figure}
-
-
