@@ -3,11 +3,11 @@
 \section{vroom}
 Vroom is a userspace NVMe driver written in Rust. While it is not production ready at the time of writing, it already provides good performance and the functionality needed for general I/O operations. In comparison to an interrupt driven driver, vroom uses polling to determine the state of the I/O operations. As interrupts are very performance intensive operations, polling can often be better in high-performance environments \cite{spdksubmitting}.
 
-A NVMe driver consists of submission and completion queues, implemented as ring buffers. The driver adds commands to the submission queue, which the NVMe controller reads and executes. The executed command gets placed on a corresponding completion queue. A deeper explanation of the steps will be done in Chapter \autoref{c:impl}.
+A NVMe driver consists of submission and completion queues, implemented as ring buffers. The driver adds commands to the submission queue, which the NVMe controller reads and executes. The executed command gets placed on a corresponding completion queue. A deeper explanation of the steps will be done in \autoref{c:impl}.
 We unbind the kernel driver and bind it to pci-stub. Pci-stub does not do anything but occupy the pci-driver such that the kernel or another application can not bind to the device.
 
 \section{I/O Memory Management Unit}
-Memory Management Units (MMU) for the CPU have been in use since the 1980s. After their first integrated application featuring on Intels 80286 chip \cite{intel80286}, they since have become the defacto standard for addressing memory on computers. By providing processes with a virtual address space instead of physical addresses, every process is isolated and prevented access to memory regions without permission. The MMU uses pages for the translation of addresses. Each address points to a region of memory called a page. These pages can have different sizes, with the default being 4Kib pages on modern x86-64 architectures.
+Memory Management Units (MMU) for the CPU have been in use since the 1980s. After their first integrated application featuring on Intels 80286 chip \cite{intel80286}, they since have become the de-facto standard for addressing memory on computers. By providing processes with a virtual address space instead of physical addresses, every process is isolated and prevented access to memory regions without permission. The MMU uses pages for the translation of addresses. Each address points to a region of memory called a page. These pages can have different sizes, with the default being 4Kib pages on modern x86-64 architectures.
 
 The translation of these pages are stored in a page table structure. A page table structure consists of multiple tables that store parts of the physical address. Certain parts of an address are used as offset in these tables. When an address is translated, a page table walk has to performed. On a 4 level page table structure as the IOMMU uses for 4KiB pages, one address resolution results in 4 memory accesses. Thus, a page table walk is a performance costly operation. To circumvent this, an Translation Lookaside Buffer (TLB) is used to cache translation.
 
@@ -30,16 +30,12 @@ Mappings can be allocated using the VFIO framework.
 
 \begin{figure}
     \centering
-    \includegraphics[width=\textwidth]{figures/4kibtranslation.pdf}
-    \caption{VT-d Paging structure for translating a 48-bit address to a \qty{4}{\kibi\byte} page, grabbed from \cite{vtdspec}}
-    \label{fig:pagewalk4kib}
+    \subcaptionbox {Translation of a 4KiB page} {\includegraphics[width=0.9\textwidth]{figures/4kibtranslation.pdf}\label{fig:pagewalk4kib}}
+    \subcaptionbox {Translation of a 2MiB page} {\includegraphics[width=0.9\textwidth]{figures/2mibtranslation.pdf}\label{fig:pagewalk2mib}}
+    \caption{VT-d Paging structure for translating a 48-bit address to a \qty{4}{\kibi\byte} and a \qty{2}{\mebi\byte} page, grabbed from \cite{vtdspec}}
+    \label{fig:pagewalk}
 \end{figure}
-\begin{figure}
-    \centering
-    \includegraphics[width=\textwidth]{figures/2mibtranslation.pdf}
-    \caption{VT-d Paging structure for translating a 48-bit address to a \qty{2}{\mebi\byte} page, grabbed from \cite{vtdspec}}
-    \label{fig:pagewalk2mib}
-\end{figure}
+
 
 \section{I/O Translation Lookaside Buffer}
 As page table walks are rather costly in performance, a cache on the IOMMU is used to store previously calculated addresses. This cache is called the Input/Output Translation Lookaside Buffer. The IOTLB possesses a limited capacity for entries which is not officially documented \cite{iommuhuber}.
@@ -66,18 +62,12 @@ vroom currently uses hugepages and locks them using mlock to prevent the Kernel 
 For accessing the devices memory as well as the device accessing the host memory, it is necessary to either use the physical addresses and compromise on safety and use root privileges or use the IOMMU for virtualization, which can introduce performance overhead.
 
 \section{Peripheral Component Interconnect Express}
-PCIe is a standard for peripheral device busses. Each device on the PCI bus has a unique PCI address, which is segmented into for parts, as seen in \autoref{fig:pciaddress}. The PCI address consists of the parts in \autoref{enum:pciaddress}.
-
-\begin{enumerate} \label{enum:pciaddress}
-    \item \textbf{Bus: } The Bus number is the ID of the PCI bus on a system. This value can be inbetween \texttt{00} and \texttt{FF}, allowing for a maximum of 256 busses.
-    \item \textbf{Device: } Each bus can contain a maximum of 32 devices. This value can reach from \texttt{00} to \texttt{1F}.
-    \item \textbf{Function: } Each device can contain up to 8 functions (\texttt{7} maximum).
-\end{enumerate}
+PCIe is a standard for peripheral device busses. Each device on the PCI bus has a unique PCI address, which is segmented into for parts, as seen in \autoref{fig:pciaddress}.
 
 \begin{figure}
     \centering
-    \includegraphics[width=\textwidth]{figures/PCIAddress.pdf}
-    \caption{Segments of a PCI address and their meaning}
+    \includegraphics[width=\textwidth]{figures/pciaddress.pdf}
+    \caption{segmented PCI identifier}
     \label{fig:pciaddress}
 \end{figure}
 

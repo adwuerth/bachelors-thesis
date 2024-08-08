@@ -1,5 +1,5 @@
 \chapter{Evaluation}
-In this chapter, we analyse the performance impact of the IOMMU, directly comparing it to the physical address approach. We will not be comparing the performance of memory allocation and mapping as in high throughput applications it should be negligable. The main focus lies on the IOMMU itself and how it performs with different page sizes. All performance tests use the Container IOMMU API for consistency reasons.
+In this chapter, we analyse the performance impact of the IOMMU, directly comparing it to the physical address approach. To compare the both approaches fairly, we dont include allocation and mapping times and perform them upfront. The main focus lies on the IOMMU itself and how it performs with different page sizes. All performance tests use the Container IOMMU API as it currently remains the widely adopted VFIO variant.
 Due to the page size limitation of using physical addresses, we cannot compare the IOMMU to physical addresses using \qty{4}{\kibi\byte} pages.
 
 \section{Setup}
@@ -130,6 +130,7 @@ When using multithreaded random writes with queue depth 1, in \autoref{fig:qd1tn
 To further test performance we can increase the queue depth. This metric describes how many outstanding commands can be placed on each queue.
 
 \section{Using multiple SSDs}
+All tests with multiple SSDs are run on the system with the AMD CPU.
 
 \section{IOMMU modes}
 There are a couple of kernel parameters that can be set at boot-time to influence the behaviour of the IOMMU. The availability is influenced by the iommu manufacturer, e.g. theres \texttt{amd\_iommu} and \texttt{intel\_iommu}, as well as the CPU architecture. Many of these manufacturer dependent options are either very specific, or shared behaviour is ported to the general iommu parameter, e.g. \texttt{amd\_iommu=fullflush} and \texttt{intel\_iommu=strict}. We will be mainly looking at the general options \texttt{iommu}.

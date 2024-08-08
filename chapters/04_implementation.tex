@@ -10,10 +10,10 @@ While there is Rust's extensive \texttt{libc} library providing the system calls
 Using \texttt{VFIO\_IOMMU\_GET\_INFO} we can see the supported pagesizes. As our IOMMU supports 4K, 2M and 1G pagesizes the field iova\_pgsizes has the value 0x40201000.
 
 \section{syscalls}
-A variety of syscalls are used in the process of allocation and mapping. These syscalls are mmap, ioctl, pread, pwrite (and mlock for the non IOMMU version). While there exist crates which implement the syscall functionality, to avoid inflating the dependency list and executable size we use the libc crate to implement them. As these require C-like syntax and an unsafe block in Rust, wrapper macros/inline functions are used to provide local, secure error handling, while also minimising the calling of unsafe code. In \autoref{lst:mmapmacro} the macro for the mmap syscall can be seen.
-As part of our error handling, we introduce an error enum variant for each syscall.
+A variety of syscalls are used in the process of allocation and mapping. These syscalls are mmap, ioctl, pread, pwrite (and mlock for the non IOMMU version). While there exist crates which implement the syscall functionality, to avoid inflating the dependency list and executable size we use the libc crate to implement them. As these require C-like syntax and an unsafe block in Rust, wrapper macros are used to provide locality of behaviour, secure error handling, while also minimising the calling of unsafe code. In \autoref{lst:mmapmacro} the macro for the mmap syscall can be seen.
+As part of our error handling, we introduce an error enum variant for each syscall. The macro is marked as unsafe in its name in order to not hide any unsafe code.
 
-\begin{lstlisting}[language=Rust, label=lst:mmapmacro]
+\begin{lstlisting}[language=Rust,caption={Syscall \texttt{mmap} macro, with own error variant}, label=lst:mmapmacro]
     #[macro_export]
     macro_rules! mmap_unsafe {
         ($addr:expr, $len:expr, $prot:expr, $flags:expr, $fd:expr, $offset:expr) => {{
@@ -37,6 +37,7 @@ As this binds the driver to a device, it has to be run with root privileges.
 By changing the owner of the VFIO container to an unprivileged user, the driver can use the VFIO driver to interact with the device without root.
 In \autoref{lst:vfioinit} the initialization script for the Vfio driver is shown.
 
+% maybe take vfio_bind function
 \begin{lstlisting}[language=bash,caption={Initializing VFIO using bash}, label=lst:vfioinit, frame=single]
     #!/bin/bash
     modprobe vfio-pci
@@ -56,7 +57,7 @@ In \autoref{lst:vfioinit} the initialization script for the Vfio driver is shown
 \subsection{Initialising the IOMMU}
 To initialise the IOMMU, we first need to get the container file descriptor. The container is accessible under the path \texttt{/dev/vfio/vfio}. Using the raw container file descriptor, we can use the following \texttt{ioctl} calls to initialise the IOMMU.
 
-\begin{lstlisting}[language=Rust, label=lst:containerioctls]
+\begin{lstlisting}[language=Rust, caption={ioctl calls needed for IOMMU initialization}, label=lst:containerioctls]
     ioctl_unsafe!(container_fd, VFIO_GET_API_VERSION)
     ioctl_unsafe!(container_fd, VFIO_CHECK_EXTENSION, VFIO_TYPE1_IOMMU)
     ioctl_unsafe!(group_fd, VFIO_GROUP_GET_STATUS, &group_status)
@@ -80,12 +81,40 @@ Using the Vfio, the initialization process of the NVMe SSD works as followed.
 \end{enumerate}
 
 \subsection{DMA}
-To enable DMA we need to set a bit in the PCIe device registers.
+To enable DMA we need to set a bit in the PCIe device registers. % todo check this 
+This is done in the command register of the PCIe configuration space.
 
 \paragraph{Mapping DMA}
 In order to provide a section of memory on which the device can perform DMA operations, the user needs to allocate some memory in the processes address space. This can be achieved by using the Linux syscall \texttt{mmap}. Using \texttt{mmap}'s flags we can also define the page size used. The \texttt{MAP\_HUGETLB} flag is used in conjunction with the \texttt{MAP\_HUGE\_2MB} and \texttt{MAP\_HUGE\_1GB} flags for 2MiB and 1 GiB pages respectively. By default \texttt{mmap} uses the default page size of 4KiB.
 The main IOMMU work is done by then creating the map struct \texttt{vfio\_iommu\_type1\_dma\_map}. We set the DMA mapping to read and write, and provide the same IOVA as the Virtual address. By then passing it to an ioctl call with the according VFIO operation \texttt{VFIO\_IOMMU\_MAP\_DMA} we can create a mapping in the page tables of the IOMMU. This way we can give the IOVA to the NVMe controller, which it will use to access the memory through the address translation of the IOMMU.
 
+\begin{lstlisting}[language=Rust,caption={Mapping memory for DMA}, label=lst:mapdma]
+    let mut iommu_dma_map = vfio_iommu_type1_dma_map {
+        argsz: mem::size_of::<vfio_iommu_type1_dma_map>() as u32,
+        flags: IoctlFlag::VFIO_DMA_MAP_FLAG_READ 
+                | IoctlFlag::VFIO_DMA_MAP_FLAG_WRITE,
+        vaddr: ptr as u64,
+        iova: ptr as u64,
+        size,
+    };
+
+    ioctl_unsafe!(
+        *container_fd,
+        IoctlOperation::VFIO_IOMMU_MAP_DMA,
+        &mut iommu_dma_map
+    )?;
+
+    let iova = iommu_dma_map.iova as usize; 
+\end{lstlisting}
+
+\newpage
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{figures/vroomdiagram.pdf}
+    \caption{I/O operation using vroom with enabled IOMMU}
+    \label{fig:vroom-graph}
+\end{figure}
 On \autoref{fig:vroom-graph} an I/O operation timeline graph can be seen. The timeline is described as followed:
 \begin{enumerate}
     \item \textbf{I/O function call:} The application calls a read/write method on vroom
@@ -99,12 +128,7 @@ On \autoref{fig:vroom-graph} an I/O operation timeline graph can be seen. The ti
     \item \textbf{Notify Application:} Vroom notifies the Application of the success of the I/O operation. The application can continue running.
 \end{enumerate}
 
-\begin{figure}
-    \centering
-    \includegraphics[width=\textwidth]{figures/vroomdiagram.pdf}
-    \caption{I/O operation using vroom with enabled IOMMU}
-    \label{fig:vroom-graph}
-\end{figure}
+
 
 \paragraph{Unmapping DMA}
 Unmapping DMA happens when the process exits, yet for performance and application reasons we implement the unmap\_dma function which can be used to unmap a DMA. Using the \texttt{VFIO\_IOMMU\_UNMAP\_DMA} \texttt{ioctl} operation we can unmap the memory, and finally free it by using \texttt{munmap}.
@@ -116,7 +140,7 @@ VFIO provides structs for using mmap to directly map the NVMe device into memory
 \subsection{Groups and Containers}
 VFIO uses group to distinguish between groups of devices which can be isolated from the host system. In the ideal case, every device would only be part of one group in order to increase security by providing single-device isolation. Groups are the smallest unit size on a system to ensure secure user access.
 To further reduce overhead from the IOMMU Containers are used in VFIO, which can hold multiple groups. These containers can be used to ease translation and reduce TLB page faults.
-In our implementation we use one group and container each for our NVMe device.
+% In our implementation we use one group and container each for our NVMe device.
 
 \section{IOMMUFD}
 The IOMMU File Descriptor user API (IOMMUFD) offers a way of controlling the IOMMU subsystem using file descriptors in user-space \cite{iommufdkerneldocs}. It replaces the VFIO IOMMU API using containers with the IOMMUFD API.
