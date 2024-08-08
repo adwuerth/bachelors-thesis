@@ -3,15 +3,8 @@
 \section{vroom}
 Vroom is a userspace NVMe driver written in Rust. While it is not production ready at the time of writing, it already provides good performance and the functionality needed for general I/O operations. In comparison to an interrupt driven driver, vroom uses polling to determine the state of the I/O operations. As interrupts are very performance intensive operations, polling can often be better in high-performance environments \cite{spdksubmitting}.
 
-A NVMe driver consists of submission and completion queues, implemented as ring buffers. The driver adds commands to the submission queue, which the NVMe controller reads and executes. The executed command gets placed on a corresponding completion queue.
-We unbind the kernel driver and bind it to pci-stub. Pci-stub does not do anything but occupy the pci-driver such that the kernel or another application can not bind to the device. A deeper explanation of the steps will be done in Chapter \autoref{c:impl}.
-A sequential vroom I/O operation work as followed:
-\begin{itemize}
-    \item \textbf{Issue Command:} The application using the driver calls an I/O method on the driver.
-    \item \textbf{Pass Command to NVMe:} Vroom creates a struct containing the I/O instructions, placing it onto the head of the submission queue. Vroom then writes to the doorbell register, which notifies the NVMe that a command has to be executed.
-    \item \textbf{NVMe I/O:} The NVMe takes the command at the tail of the submission queue. The command is executed through DMA and either writes or reads from the specified LBA on the drive.
-    \item \textbf{Completion:} The NVMe controller places the executed submission queue entry on the corresponding completion queue. The waiting driver can then confirm the success of the operation and the application can continue.
-\end{itemize}
+A NVMe driver consists of submission and completion queues, implemented as ring buffers. The driver adds commands to the submission queue, which the NVMe controller reads and executes. The executed command gets placed on a corresponding completion queue. A deeper explanation of the steps will be done in Chapter \autoref{c:impl}.
+We unbind the kernel driver and bind it to pci-stub. Pci-stub does not do anything but occupy the pci-driver such that the kernel or another application can not bind to the device.
 
 \section{I/O Memory Management Unit}
 Memory Management Units (MMU) for the CPU have been in use since the 1980s. After their first integrated application featuring on Intels 80286 chip \cite{intel80286}, they since have become the defacto standard for addressing memory on computers. By providing processes with a virtual address space instead of physical addresses, every process is isolated and prevented access to memory regions without permission. The MMU uses pages for the translation of addresses. Each address points to a region of memory called a page. These pages can have different sizes, with the default being 4Kib pages on modern x86-64 architectures.
@@ -49,7 +42,7 @@ Mappings can be allocated using the VFIO framework.
 \end{figure}
 
 \section{I/O Translation Lookaside Buffer}
-As page table walks are rather costly in performance, a cache on the IOMMU is used to store previously calculated addresses. This cache is called the Input/Output Translation Lookaside Buffer. The IOTLB possesses a limited capacity for entries which is not officially documented.
+As page table walks are rather costly in performance, a cache on the IOMMU is used to store previously calculated addresses. This cache is called the Input/Output Translation Lookaside Buffer. The IOTLB possesses a limited capacity for entries which is not officially documented \cite{iommuhuber}.
 
 \section{Memory Mapped I/O}
 Memory Mapped I/O, in contrast to Port-Mapped I/O, places Devices in the same address space as the main memory. Instead of using instruction like \texttt{in} or \texttt{out}, a device can be addressed just like the RAM can be. The addressing of this memory itself, can currently be done using two ways. Either accessing it with the physical address, or using a hardware translation device like the I/O Memory Management Unit (IOMMU). Before our implementation, vroom currently only supports the former. % add citation for kernel move/swap
@@ -73,11 +66,9 @@ vroom currently uses hugepages and locks them using mlock to prevent the Kernel 
 For accessing the devices memory as well as the device accessing the host memory, it is necessary to either use the physical addresses and compromise on safety and use root privileges or use the IOMMU for virtualization, which can introduce performance overhead.
 
 \section{Peripheral Component Interconnect Express}
-PCIe is a standard for peripheral device busses. Each device on the PCI bus has a unique PCI address, which is segmented into for parts, as seen in \autoref{fig:pciaddress}. The domain refers to the PCI domain. Modern systems can have multiple PCI domains, but in most systems this value is \texttt{0000}. The Bus segment is the PCI bus number, this value can be between \texttt{00} and \texttt{FF}, allowing for a maximum of 256 busses. The next segment is the device
+PCIe is a standard for peripheral device busses. Each device on the PCI bus has a unique PCI address, which is segmented into for parts, as seen in \autoref{fig:pciaddress}. The PCI address consists of the parts in \autoref{enum:pciaddress}.
 
-% todo rework
-
-\begin{enumerate}
+\begin{enumerate} \label{enum:pciaddress}
     \item \textbf{Bus: } The Bus number is the ID of the PCI bus on a system. This value can be inbetween \texttt{00} and \texttt{FF}, allowing for a maximum of 256 busses.
     \item \textbf{Device: } Each bus can contain a maximum of 32 devices. This value can reach from \texttt{00} to \texttt{1F}.
     \item \textbf{Function: } Each device can contain up to 8 functions (\texttt{7} maximum).
@@ -90,11 +81,11 @@ PCIe is a standard for peripheral device busses. Each device on the PCI bus has 
     \label{fig:pciaddress}
 \end{figure}
 
-\subsection{Character and Block Devices}
+\section{Character and Block Devices}
 Unix/Linux use two types of devices: Character and Block devices. Character devices are used for devices with small amounts of data and no frequent seek queries, like keyboard and mouse. Block devices on the other hand have a large data volumes, which are organized in blocks and where search is common, like harddrives and ram disks.
 Read and Write operations on character devices are done sequentially byte-by-byte, while on block devices, read/write is done at the data block level.
 These constraints also impact how the drivers for these devices work. CDev drivers directly communicate with the device drivers, while block device drivers work in conjunction with the kernel file management and block device subsystem. This allows efficient asynchronous read/write operations for large data amounts, but small byte sized data transfer achieves lower latency on character devices.
 
-\subsection{Rust}
+\section{Rust}
 While userspace drivers can theoretically and practically be written in any language, as proven by the network driver Ixy \autoref{s:ixy}, Rust excels as it not only offers memory-safety but memory-safety without garbage collection. This is especially important, as garbage collected languages have overhead and latency spikes, which can lower performance. Another huge factor is that Rust, like C, does not use exceptions. By handling, or even better, being forced to handle errors assures that no rogue exception can take down critical code infrastructure.
 Additionally, Rust provides low-level access while also offering a high-level development experience through zero-cost abstractions.

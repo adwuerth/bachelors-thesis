@@ -30,7 +30,7 @@ As part of our error handling, we introduce an error enum variant for each sysca
     } 
 \end{lstlisting}
 
-\subsection{Initialising the IOMMU}
+\subsection{Binding NVMe to \texttt{vfio-pci}}
 
 To use the IOMMU for the driver, we first need to initialize the VFIO kernel module and bind the VFIO driver to the NVMe device.
 As this binds the driver to a device, it has to be run with root privileges.
@@ -53,6 +53,21 @@ In \autoref{lst:vfioinit} the initialization script for the Vfio driver is shown
     \item Set VFIO group permissions to user/group using \texttt{chown}
 \end{enumerate}
 
+\subsection{Initialising the IOMMU}
+To initialise the IOMMU, we first need to get the container file descriptor. The container is accessible under the path \texttt{/dev/vfio/vfio}. Using the raw container file descriptor, we can use the following \texttt{ioctl} calls to initialise the IOMMU.
+
+\begin{lstlisting}[language=Rust, label=lst:containerioctls]
+    ioctl_unsafe!(container_fd, VFIO_GET_API_VERSION)
+    ioctl_unsafe!(container_fd, VFIO_CHECK_EXTENSION, VFIO_TYPE1_IOMMU)
+    ioctl_unsafe!(group_fd, VFIO_GROUP_GET_STATUS, &group_status)
+    ioctl_unsafe!(group_fd, VFIO_GROUP_SET_CONTAINER, &container_fd)
+    ioctl_unsafe!(container_fd, VFIO_SET_IOMMU, VFIO_TYPE1_IOMMU)
+    ioctl_unsafe!(group_fd, VFIO_GROUP_GET_DEVICE_FD, pci_addr)
+    ioctl_unsafe!(container_fd, VFIO_IOMMU_GET_INFO, &iommu_info)   
+\end{lstlisting}
+
+Excluding the Status and Info calls, the functionality consists of initialising the IOMMU for the device groups by setting the container on the groups, enabling Type1 for the IOMMU and fetching the device file descriptor. With the device file descriptor, we gain access to the device regions through the VFIO device API, allowing us to \texttt{mmap} the NVMe BAR into memory.
+
 \subsection{Initialising the NVMe device}
 Using the Vfio, the initialization process of the NVMe SSD works as followed.
 
@@ -64,14 +79,11 @@ Using the Vfio, the initialization process of the NVMe SSD works as followed.
     \item Pass I/O Queue addresses to NVMe device using admin queues
 \end{enumerate}
 
-\subsection{Enabling DMA}
+\subsection{DMA}
 To enable DMA we need to set a bit in the PCIe device registers.
 
-\subsection{Mapping DMA}
-In order to provide a section of memory on which the device can perform DMA operations, the user needs to allocate some memory in the processes address space. This can be achieved by using the Linux syscall \texttt{mmap}.
-Using \texttt{mmap}'s flags we can also define the page size used.
-The \texttt{MAP\_HUGETLB} flag is used in conjunction with the \texttt{MAP\_HUGE\_2MB} and \texttt{MAP\_HUGE\_1GB} flags for 2MiB and 1 GiB pages respectively.
-By default \texttt{mmap} uses the default page size of 4KiB.
+\paragraph{Mapping DMA}
+In order to provide a section of memory on which the device can perform DMA operations, the user needs to allocate some memory in the processes address space. This can be achieved by using the Linux syscall \texttt{mmap}. Using \texttt{mmap}'s flags we can also define the page size used. The \texttt{MAP\_HUGETLB} flag is used in conjunction with the \texttt{MAP\_HUGE\_2MB} and \texttt{MAP\_HUGE\_1GB} flags for 2MiB and 1 GiB pages respectively. By default \texttt{mmap} uses the default page size of 4KiB.
 The main IOMMU work is done by then creating the map struct \texttt{vfio\_iommu\_type1\_dma\_map}. We set the DMA mapping to read and write, and provide the same IOVA as the Virtual address. By then passing it to an ioctl call with the according VFIO operation \texttt{VFIO\_IOMMU\_MAP\_DMA} we can create a mapping in the page tables of the IOMMU. This way we can give the IOVA to the NVMe controller, which it will use to access the memory through the address translation of the IOMMU.
 
 On \autoref{fig:vroom-graph} an I/O operation timeline graph can be seen. The timeline is described as followed:
@@ -94,8 +106,8 @@ On \autoref{fig:vroom-graph} an I/O operation timeline graph can be seen. The ti
     \label{fig:vroom-graph}
 \end{figure}
 
-\subsection{Unmapping DMA}
-Unmapping DMA happens when the process exits, yet for performance and application reasons there is the unmap\_dma function which can be used to unmap a DMA. It is necessary to increase the allocated size to a multiple of the page size as otherwise the munmap operation will result in a failure.
+\paragraph{Unmapping DMA}
+Unmapping DMA happens when the process exits, yet for performance and application reasons we implement the unmap\_dma function which can be used to unmap a DMA. Using the \texttt{VFIO\_IOMMU\_UNMAP\_DMA} \texttt{ioctl} operation we can unmap the memory, and finally free it by using \texttt{munmap}.
 
 \subsection{Regions}
 Using regions, we can directly mmap device memory into host memory for easy access to the NVMe controller.
