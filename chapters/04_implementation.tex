@@ -2,6 +2,15 @@
 
 \section{Virtual Function I/O}
 Virtual Function I/O (VFIO) is an IOMMU agnostic framework for exposing devices to userspace.
+
+To use the IOMMU we need to initialize the IOMMU, VFIO, DMA and the NVMe device:
+\begin{enumerate}
+    \item \textbf{Initialize the IOMMU: } First, we need to initialize the IOMMU. This is done using the VFIO IOMMU API, which is an interface for the IOMMU driver. % todo
+    \item \textbf{Initialize the VFIO group: }
+    \item \textbf{Enable DMA in the PCI configuration space of the NVMe device}
+    \item \textbf{Use \texttt{mmap} to map NVMe base address register to memory}
+\end{enumerate}
+
 VFIO consists of two parts, the \texttt{vfio-pci} driver and an IOMMU API (\texttt{vfio\_iommu\_type1}). The VFIO PCI driver can be bound to a PCI device. This allows using \texttt{mmap(2)} to map the PCI device registers into memory. The type1 VFIO IOMMU API is used for mapping and unmapping address translations in the IOMMU. Alternatively, the IOMMUFD API can be used instead of the container API, which currently is not feature complete, but will eventually replace the container based solution \cite{vfiokerneldocs}.
 This allows the driver to be safe and non-privileged in comparison to directly mapping the device memory to userspace.
 Using the VFIO works by using ioctl system calls.

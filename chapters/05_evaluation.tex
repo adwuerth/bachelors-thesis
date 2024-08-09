@@ -7,6 +7,7 @@ We use two systems two benchmark the driver's performance.
 Both systems run Ubuntu 23.10 with Linux kernel version 6.5.0-42.
 Despite the NVMe specifications maximum capability of 65536 I/O queues, our SSDs support a more reasonable amount of 64 I/O queues, which seems to be a typical amount.
 We use 1 thread per 1 I/O queue in our multithreaded tests. Turbowrite is a Samsung technology that drastically speeds up write latencies in the so-called "Turbowrite" buffer with the size of \qty{42}{\giga\byte} of the NVMe, as shown in \cite{vroom}. In order to use the Turbowrite NVMe to its maximum potential, most tests are conducted in said buffer to avoid the NVMe being the bottleneck instead of the IOMMU.
+As both systems are servers with NUMA architectures, we use \texttt{numactl -N 0 -m 0} for all tests to maintain consistency.
 The NVMe SSDs are formatted to 512-byte blocksize.
 Additionally, all standard tests are run with the \texttt{iommu=nomerge} kernel parameter to prevent the IOMMU from merging entries together, which can influence the results.
 

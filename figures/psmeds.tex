@@ -21,7 +21,7 @@
             xlabel={Pages},
             xtick={16,32,64,128,256,512,1024, 2048},
             xticklabels={16,32,64,128,256,512,1024,2048},
-            ymin=8600,ymax=9000,
+            ymin=7900,ymax=8300,
             ylabel style={align=center},
             ylabel={Latency in ns},
             ymajorgrids=true,
@@ -44,10 +44,11 @@
             legend columns = 1,
         ]
 
+
         \addplot [mark=none,color=TUMRed] table[col sep=comma,x=key,y=median] {data/psmedsfinal/psmeds_2MiB_mmio.csv};
         \addplot [mark=none,color=TUMBlue] table[col sep=comma,x=key,y=median] {data/psmedsfinal/psmeds_4KiB_vfio.csv};
         \addplot [mark=none,color=TUMGreen] table[col sep=comma,x=key,y=median] {data/psmedsfinal/psmeds_2MiB_vfio.csv};
-        \addplot [mark=none,color=TUMYellow] table[col sep=comma,x=key,y=median] {data/psmedsfinal/psmeds_1GiB_vfio.csv};
+        % \addplot [mark=none,color=TUMYellow] table[col sep=comma,x=key,y=median] {data/psmedsfinal/psmeds_1GiB_vfio.csv};
 
     \end{axis}
 \end{tikzpicture}
