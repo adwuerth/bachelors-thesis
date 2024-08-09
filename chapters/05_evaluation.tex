@@ -3,10 +3,11 @@ In this chapter, we analyse the performance impact of the IOMMU, directly compar
 Due to the page size limitation of using physical addresses, we cannot compare the IOMMU to physical addresses using \qty{4}{\kibi\byte} pages.
 
 \section{Setup}
-We benchmark the performance of the driver on two systems.
+We use two systems two benchmark the driver's performance.
 Both systems run Ubuntu 23.10 with Linux kernel version 6.5.0-42.
-Even though the NVMe Specification supports up to 65536 I/O queues, our SSDs have a maximum of around 64 I/O queues, which seems to be a common amount. We use 1 thread per 1 I/O queue in our multithreaded tests. Turbowrite is a Samsung technology which drastically speeds up write latencies the so called "Turbowrite" buffer with the size of \qty{42}{\giga\byte} of the NVMe, as shown in \cite{vroom}. In order to use the Turbowrite NVMe to its maximum potential, most tests are conducted in said buffer to avoid the NVMe being the bottleneck instead of the IOMMU.
-The NVMe SSDs are formatted to 512 Byte blocksize.
+Despite the NVMe specifications maximum capability of 65536 I/O queues, our SSDs support a more reasonable amount of 64 I/O queues, which seems to be a typical amount.
+We use 1 thread per 1 I/O queue in our multithreaded tests. Turbowrite is a Samsung technology that drastically speeds up write latencies in the so-called "Turbowrite" buffer with the size of \qty{42}{\giga\byte} of the NVMe, as shown in \cite{vroom}. In order to use the Turbowrite NVMe to its maximum potential, most tests are conducted in said buffer to avoid the NVMe being the bottleneck instead of the IOMMU.
+The NVMe SSDs are formatted to 512-byte blocksize.
 Additionally, all standard tests are run with the \texttt{iommu=nomerge} kernel parameter to prevent the IOMMU from merging entries together, which can influence the results.
 
 \begin{table}
@@ -65,7 +66,6 @@ Additionally, all standard tests are run with the \texttt{iommu=nomerge} kernel 
 \end{table}
 
 % IOMMU specs, processor, ...
-
 As Linux as well as our IOMMU supports \qty{4}{\kibi\byte}, \qty{2}{\mebi\byte} and \qty{1}{\gibi\byte} page sizes we will test and analyse how it affects the overall performance.
 
 \section{Overall Latency and Throughput}
@@ -118,6 +118,7 @@ On the AMD IOMMU, we can see a performance spike that occurs at 64-128 pages for
 \section{Multithreaded Random Writes}
 When using multithreaded random writes with queue depth 1, in \autoref{fig:qd1tn} we can mostly see the same performance for 1 page, until 32 threads. This is because we allocate a buffer for each thread. For each thread, the submission queue, the completion queue and the buffer take up each one entry of the IOTLB. Therefore, with 32 threads we use 96 pages, exceeding the 64 entries we can store in the IOTLB. Using a \qty{2}{\mebi\byte} buffer, we see around 10\% less performance using \qty{4}{\kibi\byte} pages, as even with one thread, the page count exceeds the possible entries in the IOTLB. The performance of the \qty{2}{\mebi\byte} Vfio implementation stays the same as with 1 \qty{4}{\kibi\byte} buffer, as the \qty{2}{\mebi\byte} buffer fits in one IOTLB entry.
 
+
 \begin{figure}
     \centering
     \subcaptionbox {1 \qty{4}{\kibi\byte} buffer per thread} {\includegraphics[width=0.75\textwidth]{figures/qd1tn_1page}}
@@ -128,6 +129,14 @@ When using multithreaded random writes with queue depth 1, in \autoref{fig:qd1tn
 
 \section{Increasing Queue Depth}
 To further test performance we can increase the queue depth. This metric describes how many outstanding commands can be placed on each queue.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{figures/qd32tn-65536pg}
+    \caption{Latencies of random writes on an emptied SSD with queue depth 32 and increasing amount of threads}
+    \label{fig:qd32tn}
+\end{figure}
+
 
 \section{Using multiple SSDs}
 All tests with multiple SSDs are run on the system with the AMD CPU.
