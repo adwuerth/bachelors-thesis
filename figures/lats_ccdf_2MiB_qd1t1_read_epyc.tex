@@ -58,8 +58,8 @@
         ]
 
 
-        \addplot [mark=+,color=TUMDarkBlue, thick,mark repeat*=20] table[col sep=comma,x=latency,y expr=1-\thisrow{cdf}] {data/lats_ccdf_2MiB_read_epyc/lats_qd1t1_2MiB_mmio_1Gbuf.csv};
-        \addplot [mark=none,color=TUMRed, thick] table[col sep=comma,x=latency,y expr=1-\thisrow{cdf}] {data/lats_ccdf_2MiB_read_epyc/lats_qd1t1_2MiB_vfio_1Gbuf.csv};
+        \addplot [mark=+,color=TUMOrange, thick,mark repeat*=20] table[col sep=comma,x=latency,y expr=1-\thisrow{cdf}] {data/lats_ccdf_2MiB_read_epyc/lats_qd1t1_2MiB_mmio_1Gbuf.csv};
+        \addplot [mark=none,color=TUMTurquois, thick] table[col sep=comma,x=latency,y expr=1-\thisrow{cdf}] {data/lats_ccdf_2MiB_read_epyc/lats_qd1t1_2MiB_vfio_1Gbuf.csv};
 
         \addplot[mark=none,color=black!60,forget plot,dashed,thick] coordinates {
                 (0,0.1)
