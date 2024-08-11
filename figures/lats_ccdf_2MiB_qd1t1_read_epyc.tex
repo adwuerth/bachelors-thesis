@@ -1,0 +1,88 @@
+\documentclass[class=minimal,border=0pt]{standalone}
+\usepackage{tumcolor}
+
+\usepackage{pgfplots}
+\usepackage{pgfplotstable}
+\pgfplotsset{compat=newest}
+\usetikzlibrary{pgfplots.groupplots}
+\pgfplotsset{grid style={dotted}}
+\usetikzlibrary{plotmarks}
+
+\pgfplotsset{
+    mark repeat*/.style={
+        scatter,
+        scatter src=x,
+        scatter/@pre marker code/.code={
+            \pgfmathtruncatemacro\usemark{
+                (\coordindex==(\numcoords-#1)
+            }
+            \ifnum\usemark=0
+                \pgfplotsset{mark=none}
+            \fi
+        },
+        scatter/@post marker code/.code={}
+    }
+}
+
+\begin{document}
+%\pgfplotsset{
+%    every non boxed x axis/.style={} 
+%}
+\tikzset{every mark/.append style={scale=1.2}}
+\begin{tikzpicture}
+    \pgfplotsset{set layers}% using layers
+    \begin{axis}[
+            set layers,
+            width=20.2cm,
+            height=6.4cm,
+            xmin=0, xmax=200,
+            ymin=0.000004, ymax=1,
+            ymode=log,
+            % xmode=log,
+            grid=major,
+            ylabel={CCDF},
+            xlabel={Latency [$\mu$s]},
+            % xtick={0,20,40,200,500,1000,2000},
+            ytick={1, 0.1, 0.01, 0.001, 0.0001, 0.00001, 0.000001},
+            yticklabels={$10^0$,~,$10^{-2}$,~,$10^{-4}$,~,$10^{-6}$},
+            minor ytick={.9, .8, .7, .6, .5, .4, .3, .2, .09, .08, .07, .06, .05, .04, .03, .02, .009, .008, .007, .006, .005, .004, .003, .002, .0009, .0008, .0007, .0006, .0005, .0004, .0003, .0002, .00009, .00008, .00007, .00006, .00005, .00004, .00003, .00002, .000009, .000008, .000007, .000006, .000005, .000004, .000003, .000002},
+            %	legend style={font=\fontsize{8}{9}\selectfont},
+            %	tick label style={font=\fontsize{8}{9}\selectfont},
+            %	label style={font=\fontsize{8}{9}\selectfont},
+            every axis legend/.append style={nodes={right}},
+            % legend entries={\texttt{io\_uring}, \texttt{libaio}, \texttt{psync}, vroom, SPDK},
+            legend entries={vroom, vroom IOMMU},
+            legend pos = north east,
+            legend style={at={(0.99,0.99)}, anchor = north east},
+            legend columns = 1,
+        ]
+
+
+        \addplot [mark=+,color=TUMDarkBlue, thick,mark repeat*=20] table[col sep=comma,x=latency,y expr=1-\thisrow{cdf}] {data/lats_ccdf_2MiB_read_epyc/lats_qd1t1_2MiB_mmio_1Gbuf.csv};
+        \addplot [mark=none,color=TUMRed, thick] table[col sep=comma,x=latency,y expr=1-\thisrow{cdf}] {data/lats_ccdf_2MiB_read_epyc/lats_qd1t1_2MiB_vfio_1Gbuf.csv};
+
+        \addplot[mark=none,color=black!60,forget plot,dashed,thick] coordinates {
+                (0,0.1)
+                (250,0.1)
+            };
+        \addplot[mark=none,color=black!60,forget plot,dashed,thick] coordinates {
+                (0,0.01)
+                (250,0.01)
+            };
+        \addplot[mark=none,color=black!60,forget plot,dashed,thick] coordinates {
+                (0,0.0001)
+                (250,0.0001)
+            };
+        \addplot[mark=none,color=black!60,forget plot,dashed,thick] coordinates {
+                (0,0.00001)
+                (250,0.00001)
+            };
+        \begin{pgfonlayer}{axis foreground}
+            \node[anchor = north west,yshift=0.25em] at (axis cs: 10.5,0.1) { 90th percentile};
+            \node[anchor = north west,yshift=0.25em] at (axis cs: 10.5,0.01) { 99th percentile};
+            \node[anchor = south west,yshift=-0.425em] at (axis cs: 10.5,0.0001) { 99.99th percentile};
+            \node[anchor = south west,yshift=-0.425em] at (axis cs: 10.5,0.00001) { 99.999th percentile};
+        \end{pgfonlayer}
+    \end{axis}
+\end{tikzpicture}
+\end{document}

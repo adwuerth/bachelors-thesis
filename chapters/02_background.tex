@@ -65,9 +65,9 @@ vroom currently uses hugepages for DMA and locks them with the Linux syscall \te
 \section{Peripheral Component Interconnect Express}
 PCIe is a standard for peripheral device busses. Each device on the PCI bus has a unique PCI address, which is segmented into for parts, as seen in \autoref{fig:pciaddress}. The maximum data payload size of PCIe is \qty{4}{\kibi\byte}.
 
-\begin{figure}
+\begin{figure}[H]
     \centering
-    \includegraphics[width=\textwidth]{figures/pciaddress.pdf}
+    \includegraphics[width=.7\textwidth]{figures/pciaddress.pdf}
     \caption{segmented PCI identifier}
     \label{fig:pciaddress}
 \end{figure}
@@ -81,5 +81,5 @@ These constraints also impact how the drivers for these devices work. CDev drive
 Non-Uniform Memory Access is a type of system architecture for multi-CPU systems. Hardware resources are bundled into "nodes". These nodes can contain multiple CPUs, memory or I/O buses \cite{numakerneldocs}. This can relieve stress on the memory bus and improve performance if the memory is part of the same node as the CPU. On the other hand, performance may decrease if the memory is situated in another node. Using \texttt{numactl} it is possible to specify the locality of memory and cpu and run a process on one node \cite{numactlmanpage}.
 
 \section{Rust}
-While userspace drivers can theoretically and practically be written in any language, as proven by the network driver Ixy \autoref{s:ixy}, Rust excels as it not only offers memory-safety but memory-safety without garbage collection. This is especially important, as garbage collected languages have overhead and latency spikes, which can lower performance. Another huge factor is that Rust, like C, does not use exceptions. By handling, or even better, being forced to handle errors assures that no rogue exception can take down critical code infrastructure.
+While userspace drivers can theoretically and practically be written in any language, as proven by the network driver Ixy \cite{ixylanggithub}, Rust excels as it not only offers memory-safety but memory-safety without garbage collection. This is especially important, as garbage collected languages have overhead and latency spikes, which can lower performance. Another huge factor is that Rust, like C, does not use exceptions. By handling, or even better, being forced to handle errors assures that no rogue exception can take down critical code infrastructure.
 Additionally, Rust provides low-level access while also offering a high-level development experience through zero-cost abstractions.
