@@ -37,8 +37,8 @@ Communication with the VFIO interface works by using ioctl system calls.
 While there is Rust's extensive \texttt{libc} library providing the system calls \texttt{ioctl} and \texttt{mmap} and their flags, the Linux \texttt{vfio.h} constants and structs need to either be defined manually or with a crate like bindgen, which automates bindings for C and C++ libraries \cite{cratebindgen}. To keep the binary and dependency list as small as possible we chose the manual implementation.
 
 \subsection{Regions}
-Using regions, we can directly mmap device memory into host memory for easy access to the NVMe controller.
-VFIO provides structs for using mmap to directly map the NVMe device into memory. Using \texttt{VFIO\_DEVICE\_GET\_REGION\_INFO} we can attain the length and the offset needed for mmap.
+Using regions, we can directly map device memory into host memory for easy access to the NVMe controller.
+Using \texttt{VFIO\_DEVICE\_GET\_REGION\_INFO} we can attain the length and the offset needed for \texttt{mmap}.
 
 \subsection{Groups and Containers}
 VFIO uses group to distinguish between groups of devices which can be isolated from the host system. In the ideal case, every device would only be part of one group in order to increase security by providing single-device isolation. Groups are the smallest unit size on a system to ensure secure user access.
@@ -173,6 +173,23 @@ The device file descriptor, which was previously attained with \texttt{VFIO\_GRO
 By using this character device pointer we can claim the ownership over the VFIO device. That way VFIO does not rely on group/container/iommu drivers.
 I/O Address Spaces (IOAS) are the equivalent to a VFIO container in legacy VFIO.
 
+% \par\noindent
+% \begin{minipage}[t]{.50\textwidth}
+%     \begin{lstlisting}[language=Rust,frame=lrtb]
+%     ioctl_unsafe!(group_fd, VFIO_GROUP_SET_CONTAINER, &container_fd)
+%     ioctl_unsafe!(container_fd, VFIO_SET_IOMMU, VFIO_TYPE1_IOMMU)
+%     ioctl_unsafe!(group_fd, VFIO_GROUP_GET_DEVICE_FD, pci_addr)
+% \end{lstlisting}
+% \end{minipage}
+% \hfill
+% \begin{minipage}[t]{.50\textwidth}
+%     \begin{lstlisting}[language=Rust,frame=lrtb]
+%         ioctl_unsafe!(cdev_fd, VFIO_DEVICE_BIND_IOMMUFD, &bind)
+%         ioctl_unsafe!(iommufd, IOMMU_IOAS_ALLOC, &alloc_data)
+%         ioctl_unsafe!(cdev_fd, VFIO_DEVICE_ATTACH_IOMMUFD_PT, &attach_data)?
+% \end{lstlisting}
+% \end{minipage}
+
 \begin{figure}
     \centering
     \subcaptionbox {VFIO with Containers \label{fig:layer-vfio}} {\includegraphics[width=0.67\textwidth]{figures/VFIOLayer.pdf}}
@@ -180,3 +197,4 @@ I/O Address Spaces (IOAS) are the equivalent to a VFIO container in legacy VFIO.
     \caption{Layer diagrams of VFIO with VFIO Container API and IOMMUFD, partly adopted from \cite{dpdkiommufd}}
     \label{fig:layer}
 \end{figure}
+

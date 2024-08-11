@@ -9,90 +9,91 @@ Despite the NVMe specifications maximum capability of 65536 I/O queues, our SSDs
 We use 1 thread per 1 I/O queue in our multithreaded tests. Turbowrite is a Samsung technology that drastically speeds up write latencies in the so-called "Turbowrite" buffer with the size of \qty{42}{\giga\byte} of the NVMe, as shown in \cite{vroom}. In order to use the Turbowrite NVMe to its maximum potential, most tests are conducted in said buffer to avoid the NVMe being the bottleneck instead of the IOMMU.
 As both systems are servers with NUMA architectures, we use \texttt{numactl -N 0 -m 0} for all tests to maintain consistency. We also disable performance scaling options. For the Intel CPU this is called \texttt{intel\_pstate} and can be disabled using \texttt{echo "1" | sudo tee /sys/devices/system/cpu/intel\_pstate/no\_turbo}. The AMD equivalent can be disabled by using \texttt{echo "0" | sudo tee /sys/devices/system/cpu/cpufreq/boost}.
 The NVMe SSDs are formatted to 512-byte blocksize.
-Additionally, all standard tests are run with the \texttt{iommu=nomerge} kernel parameter to prevent the IOMMU from merging entries together, which can influence the results. Even though the driver can run without root, we use the root user to run the tests to avoid Linux' ulimits.
+Additionally, all standard tests are run with the \texttt{iommu.strict=1} kernel parameter to ensure a flushed IOTLB. Even though the driver can run without root, we use the root user to run the tests to avoid Linux' limits for thread-count and memory per process.
 
 \begin{table}
-    \centering
-    \begin{tabular}{lllrll}
-        \textbf{CPU}                          & \textbf{Memory}                         & \textbf{NVMe}                         & \textbf{Capacity}                       & \textbf{Count}   \\
-        \toprule
+  \centering
+  \begin{tabular}{lllrll}
+    \textbf{CPU}                          & \textbf{Memory}                         & \textbf{NVMe}                         & \textbf{Capacity}                       & \textbf{Count}   \\
+    \toprule
 
-        \multirow{2}{*}{Intel Xeon E5-2660v2} & \multirow{2}{*}{\qty{251}{\gibi\byte}}  & \multirow{2}{*}{Samsung Evo 970 Plus} & \multirow{2}{*}{\qty{1}{\tera\byte}}    &
-        \multirow{2}{*}{1}                                                                                                                                                                   \\
-                                              &                                         &                                       &                                         &                & \\ \hline
+    \multirow{2}{*}{Intel Xeon E5-2660v2} & \multirow{2}{*}{\qty{251}{\gibi\byte}}  & \multirow{2}{*}{Samsung Evo 970 Plus} & \multirow{2}{*}{\qty{1}{\tera\byte}}    &
+    \multirow{2}{*}{1}                                                                                                                                                                   \\
+                                          &                                         &                                       &                                         &                & \\ \hline
 
-        \multirow{2}{*}{AMD EPYC 7713}        & \multirow{2}{*}{\qty{1007}{\gibi\byte}} & \multirow{2}{*}{Samsung PM9A3}        & \multirow{2}{*}{\qty{1.92}{\tera\byte}} &
-        \multirow{2}{*}{8}                                                                                                                                                                   \\
-                                              &                                         &                                       &                                         &                & \\
-        \bottomrule
-    \end{tabular}
+    \multirow{2}{*}{AMD EPYC 7713}        & \multirow{2}{*}{\qty{1007}{\gibi\byte}} & \multirow{2}{*}{Samsung PM9A3}        & \multirow{2}{*}{\qty{1.92}{\tera\byte}} &
+    \multirow{2}{*}{8}                                                                                                                                                                   \\
+                                          &                                         &                                       &                                         &                & \\
+    \bottomrule
+  \end{tabular}
 
-    \caption{Specifications of systems used in performance testing}
-    \label{tab:servers}
+  \caption{Specifications of systems used in performance testing}
+  \label{tab:servers}
 \end{table}
 
 \begin{table}
-    \centering
-    \begin{tabular}{llrrrr}
-        \multirow{2}{*}{\textbf{CPU}} & \multirow{2}{*}{\textbf{Clock}} & \multirow{2}{*}{\textbf{Cores}} & \multirow{2}{*}{\textbf{Virtualization}} & \multirow{2}{*}{\textbf{Year}}
-        \\
-                                      &                                 &                                 &                                          &                                \\
-        \toprule
+  \centering
+  \begin{tabular}{llrrrr}
+    \multirow{2}{*}{\textbf{CPU}} & \multirow{2}{*}{\textbf{Clock}} & \multirow{2}{*}{\textbf{Cores}} & \multirow{2}{*}{\textbf{Virtualization}} & \multirow{2}{*}{\textbf{Year}}
+    \\
+                                  &                                 &                                 &                                          &                                \\
+    \toprule
 
-        Intel Xeon E5-2660v2          & \qty{2.2}{\giga\Hz}             & 10                              & VT-d                                     & 2012                           \\
-        AMD EPYC 7713                 & \qty{2.0}{\giga\Hz}             & 64                              & AMD-V                                    & 2021                           \\
+    Intel Xeon E5-2660v2          & \qty{2.2}{\giga\Hz}             & 10                              & VT-d                                     & 2012                           \\
+    AMD EPYC 7713                 & \qty{2.0}{\giga\Hz}             & 64                              & AMD-V                                    & 2021                           \\
 
-        \bottomrule
-    \end{tabular}
+    \bottomrule
+  \end{tabular}
 
-    \caption{CPUs of the systems}
-    \label{tab:cpus}
+  \caption{CPUs of the systems}
+  \label{tab:cpus}
 \end{table}
 
 \begin{table}
-    \centering
-    \begin{tabular}{lrrll}
-        \multirow{2}{*}{\textbf{NVMe}} & \textbf{Maximum}     & \textbf{Maximum}    & \multirow{2}{*}{\textbf{Turbowrite}} & \multirow{2}{*}{\textbf{Usage}} \\
-                                       & \textbf{Queue Count} & \textbf{Queue Size} &                                      &                                 \\
-        \toprule
+  \centering
+  \begin{tabular}{lrrll}
+    \multirow{2}{*}{\textbf{NVMe}} & \textbf{Maximum}     & \textbf{Maximum}    & \multirow{2}{*}{\textbf{Turbowrite}} & \multirow{2}{*}{\textbf{Usage}} \\
+                                   & \textbf{Queue Count} & \textbf{Queue Size} &                                      &                                 \\
+    \toprule
 
-        Samsung Evo 970 Plus           & 128                  & 16384               & Yes                                  & Consumer                        \\
-        Samsung PM9A3                  & 128                  & 16384               & No                                   & Enterprise                      \\
+    Samsung Evo 970 Plus           & 128                  & 16384               & Yes                                  & Consumer                        \\
+    Samsung PM9A3                  & 128                  & 16384               & No                                   & Enterprise                      \\
 
-        \bottomrule
-    \end{tabular}
+    \bottomrule
+  \end{tabular}
 
-    \caption{NVMe(s) of the systems}
-    \label{tab:nvmes}
+  \caption{NVMe(s) of the systems}
+  \label{tab:nvmes}
 \end{table}
 
 % IOMMU specs, processor, ...
-As Linux as well as our IOMMU supports \qty{4}{\kibi\byte}, \qty{2}{\mebi\byte} and \qty{1}{\gibi\byte} page sizes we will test and analyse how it affects the overall performance.
 
-\section{Overall Latency and Throughput}
-First, we will compare the VFIO implementation to the MMIO implementation using latency and throughput tests. In these tests, we repeatedly write/read from a \qty{4}{\kibi\byte} buffer in the memory. Each I/O operation uses a \qty{4}{\kibi\byte} unit size.
 
-In these tests, we can see that there is practically a negligable amount of overhead. As this test only uses a one page buffer at maximum, the buffer is constantly stored in the IOTLB.
+% \section{Overall Latency and Throughput}
+% First, we will compare the VFIO implementation to the MMIO implementation using latency and throughput tests. In these tests, we repeatedly write/read from a \qty{4}{\kibi\byte} buffer in the memory. Each I/O operation uses a \qty{4}{\kibi\byte} unit size.
 
-This test uses one buffer from which the NVMe driver reads/writes to. This buffer and the Queues can fit on the IOTLB. Fetching addresses from the IOTLB is very efficient and thus, no significant performance impact occurs.
+% In these tests, we can see that there is practically a negligable amount of overhead. As this test only uses a one page buffer at maximum, the buffer is constantly stored in the IOTLB.
 
-\begin{figure}
-    \centering
-    \subcaptionbox {Random write} {\includegraphics[width=0.99\textwidth]{figures/latency_ccdf_write} \label{fig:ccdf-write}}
-    \subcaptionbox {Random read} {\includegraphics[width=0.99\textwidth]{figures/latency_ccdf_read} \label{fig:ccdf-read}}
-    \caption{Tail latencies}
-    \label{fig:ccdf}
-\end{figure}
+% This test uses one buffer from which the NVMe driver reads/writes to. This buffer and the Queues can fit on the IOTLB. Fetching addresses from the IOTLB is very efficient and thus, no significant performance impact occurs.
 
-\begin{figure}
-    \centering
-    \includegraphics[width=\textwidth]{figures/throughputqd32t1singlepage}
-    \caption{Write and Read Operations with queue depth 32 and 4 threads}
-    \label{fig:iopsq32t1sp}
-\end{figure}
+% \begin{figure}
+%   \centering
+%   \subcaptionbox {Random write} {\includegraphics[width=0.99\textwidth]{figures/latency_ccdf_write} \label{fig:ccdf-write}}
+%   \subcaptionbox {Random read} {\includegraphics[width=0.99\textwidth]{figures/latency_ccdf_read} \label{fig:ccdf-read}}
+%   \caption{Tail latencies}
+%   \label{fig:ccdf}
+% \end{figure}
+
+% \begin{figure}
+%   \centering
+%   \includegraphics[width=\textwidth]{figures/throughputqd32t1singlepage}
+%   \caption{Write and Read Operations with queue depth 32 and 4 threads}
+%   \label{fig:iopsq32t1sp}
+% \end{figure}
 
 \section{Determining IOTLB size}
-As the size of the IOTLB is not stated in hardware and VT-d specifications, we use a latency test to analyse the behaviour of the IOMMU. We can assume that the IOTLB entry count must be a power of two. In order to isolate the effect of the IOMMU we aim to analyse the latencies of the fastest operation the NVMe can perform. The fastest operation is using random writes with the smallest blocksize of \qty{512}{\byte} on an empty NVMe drive.
+As Linux as well as our IOMMUs supports \qty{4}{\kibi\byte}, \qty{2}{\mebi\byte} and \qty{1}{\gibi\byte} page sizes we will first test and analyse how it affects the overall performance. Especially using \qty{4}{\kibi\byte} pages, a performance impact should be noticeable. This is because when the IOTLB is full, each I/O operation needs to get translated by the IOMMU.
+As the size of the IOTLB is not stated in hardware and VT-d or AMD-V specifications, we use a latency test to analyse the behaviour of the IOMMU. We can assume that the IOTLB entry count must be a power of two. In order to isolate the effect of the IOMMU we aim to analyse the latencies of the fastest operation the NVMe can perform. The fastest operation is using random writes with the smallest blocksize of \qty{512}{\byte} on an empty NVMe drive.
 By then repeating this random write 4096 times on page counts that are a power of two, taking the median and plotting it, we can figure out where a latency spike occurs. This power of two right before the latency spike should equal the IOTLB entry count. We configure the queues, buffer and prp-list to each take up one page, resulting in 6 allocated pages before the actual workload. This test is done using without the IOMMU with \qty{2}{\mebi\byte} pages and the IOMMU with \qty{4}{\kibi\byte}, \qty{2}{\mebi\byte} and \qty{1}{\gibi\byte} pages.
 
 \paragraph{Results of Intel Xeon}
@@ -100,10 +101,10 @@ By then repeating this random write 4096 times on page counts that are a power o
 In the resulting graph \autoref{fig:med-ps} we can observe a performance spike of around 300 nanoseconds for each write between 128 and 256 allocated pages. In the case of \qty{4}{\kibi\byte} pages, this is a memory size of only 512 KiB. Using this information, we can assume that the IOTLB has the same size for each pagesize, as well as it being 128 entries of size.
 
 \begin{figure}
-    \centering
-    \includegraphics[width=\textwidth]{figures/psmeds}
-    \caption{Latencies of random writes on an emptied SSD with increasing host memory pages on the Intel system}
-    \label{fig:med-ps}
+  \centering
+  \includegraphics[width=\textwidth]{figures/psmeds}
+  \caption{Latencies of random writes on an emptied SSD with increasing host memory pages on the Intel system}
+  \label{fig:med-ps}
 \end{figure}
 
 \paragraph{Results of AMD Epyc}
@@ -111,10 +112,10 @@ In the resulting graph \autoref{fig:med-ps} we can observe a performance spike o
 On the AMD IOMMU, we can see a performance spike that occurs at 64-128 pages for \qty{2}{\mebi\byte} and \qty{1}{\gibi\byte} page sizes and at 256-512 pages. We can therefore assume that the IOTLB size depends on the pagesize unlike on the Intel CPU. The performance itself only decreases by about \qty{60}{ns}, which is a five fold performance increase of page walks compared to the intel cpu system.
 
 \begin{figure}
-    \centering
-    \includegraphics[width=\textwidth]{figures/psmedsepyc}
-    \caption{Latencies of random writes on an emptied SSD with increasing host memory pages on the AMD system}
-    \label{fig:med-psepyc}
+  \centering
+  \includegraphics[width=\textwidth]{figures/psmedsepyc}
+  \caption{Latencies of random writes on an emptied SSD with increasing host memory pages on the AMD system}
+  \label{fig:med-psepyc}
 \end{figure}
 
 \section{Multithreaded Random Writes}
@@ -122,26 +123,55 @@ When using multithreaded random writes with queue depth 1, in \autoref{fig:qd1tn
 
 
 \begin{figure}
-    \centering
-    \subcaptionbox {1 \qty{4}{\kibi\byte} buffer per thread} {\includegraphics[width=0.75\textwidth]{figures/qd1tn_1page}}
-    \subcaptionbox {1 \qty{2}{\mebi\byte} buffer per thread} {\includegraphics[width=0.75\textwidth]{figures/qd1tn_512page}}
-    \caption{QD1 Random Write Throughput with multithreading}
-    \label{fig:qd1tn}
+  \centering
+  \subcaptionbox {1 \qty{4}{\kibi\byte} buffer per thread} {\includegraphics[width=0.75\textwidth]{figures/qd1tn_1page}}
+  \subcaptionbox {1 \qty{2}{\mebi\byte} buffer per thread} {\includegraphics[width=0.75\textwidth]{figures/qd1tn_512page}}
+  \caption{QD1 Random Write Throughput with multithreading}
+  \label{fig:qd1tn}
+\end{figure}
+
+\section{Latencies}
+
+\begin{figure}
+  \centering
+  \includegraphics[width=.8\textwidth]{figures/lats_ccdf_2MiB_qd1t1}
+  \caption{Latencies of random writes on system 1}
+  \label{fig:lats}
+\end{figure}
+
+\begin{figure}
+  \centering
+  \includegraphics[width=.8\textwidth]{figures/lats_ccdf_2MiB_qd1t1_epyc}
+  \caption{Latencies of random writes on system 2}
+  \label{fig:latsepyc}
 \end{figure}
 
 \section{Increasing Queue Depth}
-To further test performance we can increase the queue depth. This metric describes how many outstanding commands can be placed on each queue.
+To further test performance we can increase the queue depth. The queue depth describes how many outstanding requests are put onto a submission queue. By increasing it the NVMe controller can optimize and parallelize requests, which leads to a higher performance.
 
 \begin{figure}
-    \centering
-    \includegraphics[width=\textwidth]{figures/qd32tn-65536pg}
-    \caption{Latencies of random writes on an emptied SSD with queue depth 32 and increasing amount of threads}
-    \label{fig:qd32tn}
+  \centering
+  \includegraphics[width=.8\textwidth]{figures/qdnt1_2MiB}
+  \caption{Throughput with increasing Queue Depth on the Intel system}
+  \label{fig:qdnt1}
 \end{figure}
 
+\begin{figure}
+  \centering
+  \includegraphics[width=.8\textwidth]{figures/qdnt1_2MiB_epyc}
+  \caption{Throughput with increasing Queue Depth on the AMD system}
+  \label{fig:qdnt1epyc}
+\end{figure}
 
 \section{Using multiple SSDs}
 All tests with multiple SSDs are run on the system with the AMD CPU.
+
+\begin{figure}
+  \centering
+  \includegraphics[width=\textwidth]{figures/qdnt1_2MiB_8nvmes}
+  \caption{Throughput on 8 NVMe SSDs}
+  \label{fig:8nvmes}
+\end{figure}
 
 \section{IOMMU modes}
 There are a couple of kernel parameters that can be set at boot-time to influence the behaviour of the IOMMU. The availability is influenced by the iommu manufacturer, e.g. theres \texttt{amd\_iommu} and \texttt{intel\_iommu}, as well as the CPU architecture. Many of these manufacturer dependent options are either very specific, or shared behaviour is ported to the general iommu parameter, e.g. \texttt{amd\_iommu=fullflush} and \texttt{intel\_iommu=strict}. We will be mainly looking at the general options \texttt{iommu}.
