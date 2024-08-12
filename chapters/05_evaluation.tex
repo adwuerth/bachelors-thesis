@@ -1,10 +1,11 @@
 \chapter{Evaluation}
-In this chapter, we analyse the performance impact of the IOMMU, directly comparing it to the physical address approach. To compare both approaches fairly, we don't include allocation and mapping times and perform them upfront. The focus lies on the IOMMU itself and how it performs with different page sizes. All performance tests use the Container IOMMU API as it currently remains the widely adopted VFIO variant.
+In this chapter, we analyse the performance impact of the IOMMU, directly comparing it to the physical address approach. To compare both approaches fairly, we do not include allocation and mapping times and perform them upfront. The focus lies on the IOMMU itself and how it performs with different page sizes. All performance tests use the Container IOMMU API instead of IOMMUFD as it currently remains the widely adopted VFIO variant.
 Due to the page size limitation of using physical addresses, we cannot compare the IOMMU to physical addresses using \qty{4}{\kibi\byte} pages.
 
 \section{Setup}
 We use two systems two benchmark the driver's performance.
-Both systems run Ubuntu 23.10 with Linux kernel version 6.5.0-42 and are NUMA systems which 2 nodes each. The tests are run using \texttt{numactl -N 0 -m 0} to improve consistency.
+Both systems run Ubuntu 23.10 with Linux kernel version 6.5.0-42 and are NUMA systems which 2 nodes each. We adhere to NUMA-locality.
+% The tests are run using \texttt{numactl -N 0 -m 0} to improve consistency.
 
 \begin{table}[H]
   \centering
@@ -63,30 +64,42 @@ Both systems run Ubuntu 23.10 with Linux kernel version 6.5.0-42 and are NUMA sy
 
 Despite the NVMe specifications maximum capability of 65536 I/O queues, our SSDs support a more reasonable amount of 128 I/O queues, which seems to be a typical amount.
 We use 1 thread per 1 I/O queue in our multithreaded tests. Turbowrite is a Samsung technology that drastically speeds up write latencies in the so-called "Turbowrite" buffer with the size of \qty{42}{\giga\byte} of the NVMe, as shown in \cite{vroom}. In order to use the Turbowrite NVMe to its maximum potential, most tests are conducted in said buffer to avoid the NVMe being the bottleneck instead of the IOMMU.
-The NVMe SSDs are formatted to 512-byte blocksize.
+The NVMe SSDs are formatted to 512-byte blocksize. All writes are performed on an empty SSD to avoid any overhead through garbage collection on the NVMe. As the NVMe can optimize reads on an empty SSD, all reads will be performed on a full SSD. The tests mainly use random writes/reads, as the NVMe can drastically optimize sequential requests, which can lead to altered results.
 
 We also disable performance scaling options which can influence the results.
 Intels \texttt{intel\_pstate} and AMD's frequency scaling driver can be disabled using:
 
-\begin{lstlisting}[language=bash, label=lst:vfiobind, frame=single]
-  echo "1" | sudo tee /sys/devices/system/cpu/intel_pstate/no_turbo
-  echo "0" | sudo tee /sys/devices/system/cpu/cpufreq/boost
-\end{lstlisting}
+% \begin{lstlisting}[language=bash, label=lst:vfiobind, frame=single]
+%   echo "1" | sudo tee /sys/devices/system/cpu/intel_pstate/no_turbo
+%   echo "0" | sudo tee /sys/devices/system/cpu/cpufreq/boost
+% \end{lstlisting}
 
 Additionally, all standard tests are run with the \texttt{iommu.strict=1} kernel parameter to ensure a flushed IOTLB.
 
 % Even though the driver can run without root, we use the root user to run the tests to avoid Linux' limits for thread-count and memory per process.
 
-\section{Determining IOTLB size}
+\section{Impact of \qty{4}{\kibi\byte} pages}
+When comparing the performance of vroom without the IOMMU against vroom with IOMMU using \qty{4}{\kibi\byte} and \qty{2}{\mebi\byte} pages, a performance difference can be noticed.
+
+\begin{figure}[H]
+  \centering
+  \subcaptionbox {1 \qty{4}{\kibi\byte} buffer per thread} {\includegraphics[width=0.75\textwidth]{figures/qd1tn_1page}}
+  \subcaptionbox {1 \qty{2}{\mebi\byte} buffer per thread} {\includegraphics[width=0.75\textwidth]{figures/qd1tn_512page}}
+  \caption{QD1 Random Write Throughput with multithreading}
+  \label{fig:qd1tn}
+\end{figure}
+
+\subsection{Determining IOTLB size}
 As Linux as well as our IOMMUs supports \qty{4}{\kibi\byte}, \qty{2}{\mebi\byte} and \qty{1}{\gibi\byte} page sizes we will first test and analyse how it affects the latencies and overall performance. Especially using \qty{4}{\kibi\byte} pages, a performance impact should be noticeable. As we use a typical unit size of \qty{4}{\kibi\byte} using \qty{4}{\kibi\byte} pages should result in TLB-thrashing, and every operation in a page walk.
 
-As the size of the IOTLB is not stated in hardware and VT-d or AMD-V specifications, we use a latency test to analyze the behaviour of the IOMMU. We can assume that the IOTLB entry count must be a power of two. In order to isolate the effect of the IOMMU we track the latencies of the fastest operation the NVMe can perform. The fastest operation is using random writes with the smallest blocksize of \qty{512}{\byte} on an empty NVMe drive.
+As the size of the IOTLB is not stated in hardware and VT-d or AMD-V specifications, we use a latency test to analyze the behaviour of the IOMMU.
+In order to isolate the effect of the IOMMU we track the latencies of the fastest operation the NVMe can perform. The fastest operation is using random writes with the smallest blocksize of \qty{512}{\byte}.
 
 If we then write from a single block from each page to the NVMe, repeat it 4096 times on an increasing page count that are a power of two, we can figure out where a latency spike occurs. The page count right before the latency spike should equal the IOTLB entry count. We configure the queues, buffer and prp-list to each take up one page, resulting in 6 allocated pages before the actual workload. This test is done using without the IOMMU with \qty{2}{\mebi\byte} pages and the IOMMU with \qty{4}{\kibi\byte}, \qty{2}{\mebi\byte} and \qty{1}{\gibi\byte} pages.
 
 \paragraph{Results of Intel Xeon}
 
-In the resulting graph \autoref{fig:med-ps} we can observe a performance spike of around 300 nanoseconds for each write between 128 and 256 allocated pages. In the case of \qty{4}{\kibi\byte} pages, this is a memory size of only 512 KiB. Using this information, we can assume that the IOTLB has the same size for each pagesize, as well as it being 128 entries of size.
+In the resulting graph \autoref{fig:med-ps} we can observe a performance spike of around 250 nanoseconds for each write between 64 and 128 allocated pages. In the case of \qty{4}{\kibi\byte} pages, this is a memory size of only 512 KiB. Using this information, we can assume that the IOTLB has the same size for each pagesize, as well as it being 64 entries of size. This matches the page size Stefan Huber and Rolf Neugebauer found.
 
 \begin{figure}[H]
   \centering
@@ -105,18 +118,9 @@ On the AMD IOMMU, we can see a performance spike that occurs at 64-128 pages for
   \label{fig:med-psepyc}
 \end{figure}
 
-\section{Multithreaded Random Writes}
-When using multithreaded random writes with queue depth 1, in \autoref{fig:qd1tn} we can mostly see the same performance for 1 page, until 32 threads. This is because we allocate a buffer for each thread. For each thread, the submission queue, the completion queue and the buffer take up each one entry of the IOTLB. Therefore, with 32 threads we use 96 pages, exceeding the 64 entries we can store in the IOTLB. Using a \qty{2}{\mebi\byte} buffer, we see around 10\% less performance using \qty{4}{\kibi\byte} pages, as even with one thread, the page count exceeds the possible entries in the IOTLB. The performance of the \qty{2}{\mebi\byte} Vfio implementation stays the same as with 1 \qty{4}{\kibi\byte} buffer, as the \qty{2}{\mebi\byte} buffer fits in one IOTLB entry.
-
-\begin{figure}[H]
-  \centering
-  \subcaptionbox {1 \qty{4}{\kibi\byte} buffer per thread} {\includegraphics[width=0.75\textwidth]{figures/qd1tn_1page}}
-  \subcaptionbox {1 \qty{2}{\mebi\byte} buffer per thread} {\includegraphics[width=0.75\textwidth]{figures/qd1tn_512page}}
-  \caption{QD1 Random Write Throughput with multithreading}
-  \label{fig:qd1tn}
-\end{figure}
-
 \section{Latencies}
+
+
 
 \begin{figure}[H]
   \centering
@@ -153,7 +157,7 @@ When using multithreaded random writes with queue depth 1, in \autoref{fig:qd1tn
 
 
 \section{Increasing Queue Depth}
-To further test performance we can increase the queue depth. The queue depth describes how many outstanding requests are put onto a submission queue.
+We also take a look at throughput performance with larger queue depths. The queue depth describes how many outstanding requests are put onto a submission queue.
 
 \begin{figure}[H]
   \centering
@@ -178,6 +182,8 @@ All tests with multiple SSDs are run on the system with the AMD CPU.
   \caption{Throughput on 8 NVMe SSDs with 1 thread each}
   \label{fig:8nvmes}
 \end{figure}
+
+\section{PCIe boundaries}
 
 \section{IOMMU modes}
 There are a couple of kernel parameters that can be set at boot-time to influence the behaviour of the IOMMU. The availability is influenced by the iommu manufacturer, e.g. theres \texttt{amd\_iommu} and \texttt{intel\_iommu}, as well as the CPU architecture. Many of these manufacturer dependent options are either very specific, or shared behaviour is ported to the general iommu parameter, e.g. \texttt{amd\_iommu=fullflush} and \texttt{intel\_iommu=strict}. We will be mainly looking at the general options \texttt{iommu}.

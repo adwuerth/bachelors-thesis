@@ -1,0 +1,96 @@
+\documentclass[border=10pt]{standalone}
+\usepackage{amsmath,amsfonts,amsthm}
+\usepackage{tumcolor}
+\usepackage{bytefield}
+\usepackage{rotating}
+
+
+\begin{document}
+\newcommand{\bitlabel}[2]{%
+  \bitbox[]{#1}{%
+    \raisebox{1pt}[4ex][1pt]{%
+      \turnbox{0}{\fontsize{9}{0}\selectfont#2}%
+    }%
+  }%
+}
+\begin{bytefield}[
+    leftcurly=., leftcurlyspace=0pt,
+    bitwidth=4.5em,
+    bitheight=3em,
+  ]{8}
+
+  \bitlabel{1}{0x0} &
+  \bitlabel{1}{0x1} &
+  \bitlabel{1}{0x2} &
+  \bitlabel{1}{0x3} &
+  \bitlabel{1}{0x4} &
+  \bitlabel{1}{0x5} &
+  \bitlabel{1}{0x6} &
+  \bitlabel{1}{0x7} \\
+  % \bitlabel{1}{0x8} &
+  % \bitlabel{1}{0x9} &
+  % \bitlabel{1}{0xa} &
+  % \bitlabel{1}{0xb} &
+  % \bitlabel{1}{0xc} &
+  % \bitlabel{1}{0xd} &
+  % \bitlabel{1}{0xe} &
+  % \bitlabel{1}{0xf} \\
+  % \wordbox{1}{A 16-bit field} \\
+  \begin{leftwordgroup}{0x00}
+    \bitbox{2}{Vendor ID} &
+    \bitbox{2}{Device ID} &
+    \bitbox{2}[bgcolor=TUMLightBlue]{Command Register} &
+    \bitbox{2}{Status Register}
+  \end{leftwordgroup}\\
+
+  \begin{leftwordgroup}{0x08}
+    \bitbox{1}{Revision ID} &
+    \bitbox{3}{Class Code} &
+    \bitbox{1}{Cache Line} &
+    \bitbox{1}{Latency Timer} &
+    \bitbox{1}{Header Type} &
+    \bitbox{1}{BIST}
+  \end{leftwordgroup}\\
+
+  \begin{rightwordgroup}{Base Address Registers}
+    \begin{leftwordgroup}{0x10}
+      \bitbox{4}[bgcolor=TUMLightBlue]{Base Address 0}
+      \bitbox{4}{Base Address 1}
+      % \wordbox{1}{Base Address Registers}
+    \end{leftwordgroup}\\
+
+    \begin{leftwordgroup}{0x18}
+      % \wordbox{1}{Base Address Registers}
+      \bitbox{4}{Base Address 2}
+      \bitbox{4}{Base Address 3}
+    \end{leftwordgroup}\\
+
+    \begin{leftwordgroup}{0x20}
+      % \wordbox{1}{Base Address Registers}
+      \bitbox{4}{Base Address 4}
+      \bitbox{4}{Base Address 5}
+    \end{leftwordgroup}
+  \end{rightwordgroup}\\
+
+  \begin{leftwordgroup}{0x28}
+    \bitbox{4}{CardBus} &
+    \bitbox{2}{Subsystem vendor ID}
+    \bitbox{2}{Subsystem ID}
+  \end{leftwordgroup}\\
+
+  \begin{leftwordgroup}{0x30}
+    \bitbox{4}{Expansion ROM Base Address} &
+    \bitbox{1}{Cap. Pointer} &
+    \bitbox{3}{Reserved}
+  \end{leftwordgroup}\\
+
+  \begin{leftwordgroup}{0x38}
+    \bitbox{4}{Reserved}
+    \bitbox{1}{Interrupt Line} &
+    \bitbox{1}{Interrupt Pin} &
+    \bitbox{1}{\texttt{MIN\_GNT}} &
+    \bitbox{1}{\texttt{MAX\_LAT}}
+  \end{leftwordgroup}
+\end{bytefield}
+\end{document}
+

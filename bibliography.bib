@@ -46,6 +46,16 @@
   year   = {2021}
 }
 
+@mastersthesis{baellmann,
+  author  = {Ellmann, Simon},
+  school  = {Technical University of Munich},
+  title   = {Writing Network Drivers in Rust},
+  year    = {2018},
+  type    = {Bachelor's thesis},
+  url     = {https://www.net.in.tum.de/fileadmin/bibtex/publications/theses/2018-ixy-rust.pdf},
+  urldate = {2024-08-12}
+}
+
 @manual{vtdspec,
   author  = {Intel},
   title   = {Intel Virtualization Technology for Directed I/O Architecture Specification Revision 4.1},
@@ -243,3 +253,22 @@
   url     = {https://github.com/ixy-languages/ixy-languages},
   urldate = {2024-08-11}
 }
+
+@inproceedings{pcieperfnegebauer,
+  author    = {Neugebauer, Rolf and Antichi, Gianni and Zazo, Jos\'{e} Fernando and Audzevich, Yury and L\'{o}pez-Buedo, Sergio and Moore, Andrew W.},
+  title     = {Understanding PCIe performance for end host networking},
+  year      = {2018},
+  isbn      = {9781450355674},
+  publisher = {Association for Computing Machinery},
+  address   = {New York, NY, USA},
+  url       = {https://doi.org/10.1145/3230543.3230560},
+  doi       = {10.1145/3230543.3230560},
+  abstract  = {In recent years, spurred on by the development and availability of programmable NICs, end hosts have increasingly become the enforcement point for core network functions such as load balancing, congestion control, and application specific network offloads. However, implementing custom designs on programmable NICs is not easy: many potential bottlenecks can impact performance.This paper focuses on the performance implication of PCIe, the de-facto I/O interconnect in contemporary servers, when interacting with the host architecture and device drivers. We present a theoretical model for PCIe and pcie-bench, an open-source suite, that allows developers to gain an accurate and deep understanding of the PCIe substrate. Using pcie-bench, we characterize the PCIe subsystem in modern servers. We highlight surprising differences in PCIe implementations, evaluate the undesirable impact of PCIe features such as IOMMUs, and show the practical limits for common network cards operating at 40Gb/s and beyond. Furthermore, through pcie-bench we gained insights which guided software and future hardware architectures for both commercial and research oriented network cards and DMA engines.},
+  booktitle = {Proceedings of the 2018 Conference of the ACM Special Interest Group on Data Communication},
+  pages     = {327–341},
+  numpages  = {15},
+  keywords  = {reconfigurable hardware, operating system, PCIe},
+  location  = {Budapest, Hungary},
+  series    = {SIGCOMM '18}
+}
+
