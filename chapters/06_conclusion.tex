@@ -1,15 +1,15 @@
 \chapter{Conclusion}
 \paragraph{IOMMU}
-In this thesis, we improved vroom's safety by implementing IOMMU support and come to the same conclusion as SPDK. The full code of the driver including IOMMU support can be found on GitHub \cite{vroomsource}.
-In our tests we practically only saw a performance impact on the older and slower Intel Xeon CPU, which makes us conclude that the IOMMU performance is becoming less of a factor.
-We figured out the IOTLB size of two IOMMU models, which given the right conditions, can introduce address translation overhead.
-There was a noticeable overhead because of the IOMMU found, but could only be observed with \qty{4}{\kibi\byte} pages. This issue can be solved by using \qty{2}{\mebi\byte} pages. Using hugepages, the IOMMU performs the same as the physical addressing.
-The advantages of using the VFIO such as access rights and bigger address spaces as well as the ability to run the driver without root privileges overweigh the small performance impact that can be registered in niche cases.
-Considering that IOMMU technology has seen a rise in popularity in the use of hardware passtrough for virtualization it is also likely that in the future the IOMMU performance and the IOTLB size will increase, further closing the gap. The ability to improve security drastically and increasing address space, while not compromising on performance are the reason the MMU succeeded, and it is likely that the IOMMU will as well.
+In this thesis, we improved Vroom's safety by implementing IOMMU support and came to the same conclusion as SPDK. The complete code of the driver, including IOMMU support, can be found on GitHub \cite{vroomsource}.
+In our tests, we only saw a noticeable performance impact on the older and slower Intel Xeon CPU, which makes us conclude that the IOMMU performance is becoming less of a factor.
+We figured out the IOTLB size of two IOMMU models, which, given the right conditions, can introduce address translation overhead.
+There was a noticeable overhead because of the IOMMU found, but it could only be observed with \qty{4}{\kibi\byte} pages. This issue is solved by using \qty{2}{\mebi\byte} pages. Using hugepages, the IOMMU performs the same as the physical addressing.
+The advantages of using the VFIO, such as access rights and bigger address spaces, as well as the ability to run the driver without root privileges, outweigh the small performance impact that can be registered in niche cases.
+Considering that IOMMU technology has seen a rise in popularity in the use of hardware passthrough for virtualization, it is also likely that in the future, the IOMMU performance and the IOTLB size will increase, further closing the gap. The ability to improve security drastically and increase address space while not compromising on performance is the reason the MMU succeeded, and it is likely that the IOMMU will as well.
 
 \paragraph{Rust in driver development}
-The viability of using Rust to develop drivers has been shown oftentimes, and it has proved that a modern, memory-safe language like Rust can compete with C in systems development. Using Rust does not only provide more safety, but also a modern ecosystem, a package manager and zero-cost abstractions. Using Rust for drivers ensures in-process memory safety.
+The viability of using Rust to develop drivers has been shown oftentimes, and it has proved that a modern, memory-safe language like Rust can compete with C in systems development. Using Rust not only provides more safety but also a modern ecosystem, a package manager, and zero-cost abstractions. Using Rust for drivers ensures in-process memory safety.
 
 \paragraph{Future Work}
-Future Work on the driver could include expanding the NVMe capabilities. Currently the driver is fixed to one namespace. Furthermore, the driver does not support a block device layer and a file system. Including sysfs support could also be a next step.
-To further push the throughput it could be investigated if and how many threads could operate on one I/O queue.
+Future Work on the driver could include expanding the NVMe capabilities. Currently, the driver is fixed to one namespace. Furthermore, the driver does not support a block device layer or file system. Including sysfs support could also be a next step.
+It could be investigated if and how many threads could operate on one I/O queue to further push the throughput.
