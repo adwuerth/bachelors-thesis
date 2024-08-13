@@ -66,8 +66,7 @@ In the optimal case, using a \qty{2}{\mebi\byte} or \qty{1}{\gibi\byte} page siz
     \item \textbf{Transparent Hugepages}: Transparent Hugepages are a more recent addition to the kernel. Transparent hugepages are not fixed or reserved in the kernel and allow all unused memory to be used for other purposes. THPs provide a way of utilizing the TLB effectively without reserving vast amounts of memory. The \texttt{khugepaged} daemon scans memory and collapses sequences of basic pages into bigger pages. THPs can either be enabled, disabled, or only be used on \texttt{madvise(MADV\_HUGEPAGE)} memory regions \cite{transhugekerneldocs}.
 \end{itemize}
 
-Vroom currently uses hugepages for DMA and locks them with the Linux syscall \texttt{mlock} to prevent the kernel from swapping them out.
-Hugepages have to be used to prevent the kernel from moving data from one physical page to another physical page. The kernel cannot move these pages like \qty{4}{\kibi\byte} pages. This is called 'page pinning'. Other userspace drivers like SPDK or DPDK also rely on this to perform DMA without the IOMMU.
+Vroom currently uses hugepages for DMA and locks them with the Linux syscall \texttt{mlock} to prevent the kernel from swapping them out. This does not ensure that the kernel can not migrate the page to another physical location. This is the reason why persistent Hugepages have to be used. The kernel cannot move these pages like \qty{4}{\kibi\byte} pages. Other userspace drivers like SPDK or DPDK also rely on this to perform DMA without the IOMMU.
 
 \section{Peripheral Component Interconnect Express}
 PCIe is a standard for peripheral device buses. Each device on the PCI bus has a unique PCI address, segmented into three parts, as seen in \autoref{fig:pciaddress}. The maximum data payload size of PCIe is \qty{4}{\kibi\byte}.
@@ -87,17 +86,6 @@ Each device on the bus uses a PCIe configuration space, which includes registers
     \caption{PCIe configuration space, adapted from \cite{vroom}}
     \label{fig:pciconfig}
 \end{figure}
-
-% % maybe remove 
-% \section{Character and Block Devices}
-% Unix/Linux uses two types of devices: Character and Block devices. Character devices are used for devices with small amounts of data and no frequent seek queries, like keyboard and mouse.
-% Block devices typically have large data volumes and are organized in blocks, like HDDs and SSDs.
-% Read and Write operations on character devices are done sequentially byte-by-byte, while on block devices, read/write is done at the data block level.
-% These constraints also impact how the drivers for these devices work. CDev drivers directly communicate with the device drivers, while block device drivers work in conjunction with the kernel file management and block device subsystem. This allows efficient asynchronous read/write operations for large data amounts, but small byte-sized data transfer achieves lower latency on character devices.
-
-% % maybe remove 
-% \section{Non-Uniform Memory Access}
-% Non-Uniform Memory Access is a type of system architecture for multi-CPU systems. Hardware resources are bundled into "nodes". These nodes can contain multiple CPUs, memory, and I/O buses \cite{numakerneldocs}. This can relieve stress on the memory bus and improve performance if the memory is part of the same node as the CPU. On the other hand, performance may decrease if the memory is situated in another node. With \texttt{numactl}, it is possible to specify the locality of memory and CPU to run a process on one node \cite{numactlmanpage}.
 
 \section{Rust}
 While userspace drivers can theoretically and practically be written in any language, as proven by the network driver Ixy \cite{ixylanggithub}, Rust excels as it not only offers memory safety but memory safety without garbage collection. This is especially important, as garbage-collected languages have overhead and latency spikes, which can lower performance. Another critical factor is that, like C, Rust does not use exceptions. Being forced to handle errors ensures no rogue exception can take down critical code infrastructure.

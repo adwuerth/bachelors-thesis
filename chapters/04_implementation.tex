@@ -17,7 +17,7 @@ VFIO acts like the kernel module to userspace drivers, allowing unprivileged, re
 To use vroom with the IOMMU, we need to initialize the IOMMU, VFIO, DMA, and the NVMe device:
 \begin{enumerate}
     \item \textbf{\nameref{sec:bindvfiopci}}: Before initializing the devices, the NVMe device needs to be unbound from the kernel driver and bound to \texttt{vfio-pci}.
-    \item \textbf{\nameref{sec:iommuinit}}: As the first step of the actual driver, we need to initialize the IOMMU. This is done using the VFIO IOMMU API, which is an interface for the IOMMU driver. We can get the container file descriptor with VFIO. The group needs to be assigned to the container. In this step, we also can attain the device file descriptor, which can be used to read/write/\texttt{mmap} the PCIe registers through the IOMMU.
+    \item \textbf{\nameref{sec:iommuinit}}: As the first step of the actual driver, we need to initialize the container. This is done using the VFIO IOMMU API, which is an interface for the IOMMU driver. We can get the container file descriptor with VFIO. The group needs to be assigned to the container. In this step, we also can attain the device file descriptor, which can be used to read/write/\texttt{mmap} the PCIe registers through the IOMMU.
     \item \textbf{\nameref{sec:pcieconfig}}: Using the device fd, we can enable DMA by setting a bit in the PCIe command register.
     \item \textbf{\nameref{sec:nvmeinit}}: We use \texttt{mmap} to map the NVMe base address register into memory for configuring the NVMe device.
     \item \textbf{\nameref{sec:dmamapping}}: Using the container fd, we can create a mapping in the IOMMU and, therefore, place it in the virtual address space of the NVMe controller for DMA.
@@ -57,7 +57,7 @@ A new container can be created by opening the file \texttt{/dev/vfio/vfio}. The 
 \subsection{Binding NVMe to \texttt{vfio-pci}}\label{sec:bindvfiopci}
 To use the IOMMU for the driver, we first need to initialize the VFIO kernel module using \texttt{modprobe} and bind the \texttt{vfio-pci} driver to the NVMe device. By changing the owner of the container and group file to an unprivileged user, vroom can use the VFIO driver to create memory mappings and interact with the device without root.
 
-\subsection{IOMMU initialization}\label{sec:iommuinit}
+\subsection{IOMMU container initialization}\label{sec:iommuinit}
 To initialize the IOMMU, we first need to get the container file descriptor. The container is accessible under the path \texttt{/dev/vfio/vfio}. Using the raw container file descriptor, we can use the following \texttt{ioctl} calls:
 
 \begin{lstlisting}[language=Rust, caption={\texttt{ioctl} calls needed for IOMMU initialization}, label=lst:containerioctls]
@@ -70,7 +70,7 @@ To initialize the IOMMU, we first need to get the container file descriptor. The
     ioctl_unsafe!(container_fd, VFIO_IOMMU_GET_INFO, &iommu_info)   
 \end{lstlisting}
 
-Excluding the Status and Info calls, the functionality consists of initializing the IOMMU for the device groups by setting the container on the groups, enabling Type1 for the IOMMU, and fetching the device file descriptor. With the device file descriptor, we gain access to the device regions through the VFIO device API, allowing us to \texttt{mmap} the NVMe BAR into memory.
+Excluding the Status and Info calls, the functionality consists of initializing the IOMMU for the device groups by setting the container on the groups, enabling Type1 for the IOMMU, and fetching the device file descriptor. With the device file descriptor, we gain access to the device regions through the VFIO device API, allowing us to access the device registers.
 
 \subsection{Device register access}\label{sec:pcieconfig}
 We can access the device registers using the \texttt{VFIO\_DEVICE\_GET\_REGION\_INFO} \texttt{ioctl} operation on the device fd. This operation requires the struct \texttt{vfio\_region\_info} as the third parameter, which needs to be initialized with a given index from \texttt{vfio.h}. After performing the syscall, the other fields, e.g., size or offset, can be used to read/write or map device registers.
@@ -175,7 +175,7 @@ The sequence of events are as followed:
 \end{enumerate}
 
 \section{IOMMUFD}
-The IOMMU File Descriptor user API (IOMMUFD) offers a way of controlling the IOMMU subsystem using file descriptors in user-space \cite{iommufdkerneldocs}.
+The IOMMU File Descriptor user API (IOMMUFD) offers a way of controlling the IOMMU subsystem using file descriptors in user-space \cite{iommufdkerneldocs}. IOMMUFD offers a more granular managing of the IOMMU, using devices instead of groups. Additionally, it supports a more user-friendly interface, allowing the user to modify IOAS easily. Although IOMMUFD could potentially be used as a standalone to provide simple IOAS management functionality like mapping or unmapping, e.g., the device registers still need to be accessed through the \texttt{vfio-pci} driver. Thus, IOMMUFD is used in conjunction with VFIO, replacing its backend, i.e. the interaction with the IOMMU.
 IOMMUFD has only been recently added to the Linux Kernel in December 2022. E.g. Debian 12 does not include it, Fedora 40 does, but it is not enabled in the kernel configuration. Considering that it is not widely available or enabled on many distributions, our driver offers both options of using the IOMMU.
 Instead of using containers or groups, IOMMUFD uses so-called I/O address spaces (IOAS) and character device file descriptors. Just like containers, IOAS can be used to provide shared memory mappings for multiple devices. The implementation of IOMMUFD is similar to VFIO, but there are some key differences.
 

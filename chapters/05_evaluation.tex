@@ -81,7 +81,7 @@ When comparing the performance of vroom without the IOMMU against vroom with IOM
 \end{figure}
 
 \subsection{PCIe limitations}
-When testing increasing queue depth, around a 10\% performance decrease can be seen using queue depth 4. When further increasing the queue depth, a decrease of this gap can be seen, with the throughput capping at around 890K IOPS.
+When testing increasing queue depth, as seen on \autoref{fig:qdnt1-4kib}, around a 10\% performance decrease can be seen using queue depth 4. When further increasing the queue depth, a decrease of this gap can be seen, with the throughput capping at around 890K IOPS.
 
 The Intel System SSD is mounted on a PCIe 3.0 4x width bus with a maximum payload of 256 bytes. This PCI bus has a maximum throughput of 3.938 GB/s. Using the SSD to its full capability, i.e. using random writes with high queue depths in the Turbowrite buffer, can result in the bus being the bottleneck. With the highest throughput measured being 890K IOPS with one I/O operation containing 4096 bytes of data, we achieve 3.64 GB/s. Including the headers for each TLP and submission- and completion queue entries, we achieve 3.908 GB/s. This roughly equates the PCIe bus limits and leads us to conclude, that the missing overhead of using \qty{4}{\kibi\byte} pages stems from this bottleneck.
 
@@ -90,7 +90,7 @@ The Intel System SSD is mounted on a PCIe 3.0 4x width bus with a maximum payloa
   \subcaptionbox {1 \qty{4}{\kibi\byte} buffer per thread} {\includegraphics[width=0.48\textwidth]{figures/qdnt1_1page}}
   \subcaptionbox {1 \qty{2}{\mebi\byte} buffer per thread} {\includegraphics[width=0.48\textwidth]{figures/qdnt1_512page}}
   \caption{Singlethreaded random write throughput over 20s with increasing queue depth}
-  \label{fig:qdnt1_4kib}
+  \label{fig:qdnt1-4kib}
 \end{figure}
 
 \subsection{Determining IOTLB size}
