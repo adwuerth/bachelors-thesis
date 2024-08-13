@@ -21,9 +21,9 @@
             xlabel={Queue Depth},
             xtick={1,2,4,8,16,32,64},
             xticklabels={1,2,4,8,16,32,64},
-            ymin=0,ymax=700000,
+            ymin=0,ymax=700,
             ylabel style={align=center},
-            ylabel={IOPS},
+            ylabel={KIOPS},
             ymajorgrids=true,
             scale only axis,
             % nodes near coords,
@@ -44,10 +44,10 @@
             legend columns = 1,
         ]
 
-        \addplot [mark=none,color=TUMYellow] table[col sep=comma,x=key,y=iops] {data/qdnt1_2MiB/qdnt1_2MiB_mmio.csv};
+        \addplot [mark=none,color=TUMBlue] table[col sep=comma,x=key,y expr=\thisrow{iops}/1000] {data/qdnt1_2MiB/qdnt1_2MiB_mmio.csv};
         % \addplot [mark=none,color=TUMYellow] table[col sep=comma,x=key,y=iops] {data/qdnt4_2MiB_vfio_8nvmes/qd1tn_1GiB_mmio.csv};
         % \addplot [mark=none,color=TUMRed] table[col sep=comma,x=key,y=iops] {data/qdnt4_2MiB_vfio_8nvmes/qd1tn_4KiB_vfio.csv};
-        \addplot [mark=none,color=TUMBlue] table[col sep=comma,x=key,y=iops] {data/qdnt1_2MiB/qdnt1_2MiB_vfio.csv};
+        \addplot [mark=none,color=TUMGreen] table[col sep=comma,x=key,y expr=\thisrow{iops}/1000] {data/qdnt1_2MiB/qdnt1_2MiB_vfio.csv};
 
         % \addplot [mark=none,color=TUMBlue] table[col sep=comma,x=key,y=iops] {data/qdnt4_2MiB_vfio_8nvmes/qd1tn_1GiB_vfio.csv};
         % \addplot [mark=none,color=TUMGreen] table[col sep=comma,x=threads,y=iops] {data/qd1tn-1page/qd1lats_vfio_1GiB.csv};
