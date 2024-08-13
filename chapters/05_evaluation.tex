@@ -70,7 +70,7 @@ Additionally, all standard tests are run with the \texttt{iommu.strict=1} kernel
 \subsection{Throughput}
 As Linux as well as our IOMMUs supports \qty{4}{\kibi\byte}, \qty{2}{\mebi\byte} and \qty{1}{\gibi\byte} page sizes we will first test and analyse how it affects the latencies and overall performance. Especially using \qty{4}{\kibi\byte} pages, a performance impact should be noticeable. As we use a typical unit size of \qty{4}{\kibi\byte} using \qty{4}{\kibi\byte} pages should result in TLB-thrashing, and every operation in a page walk.
 
-When comparing the performance of vroom without the IOMMU against vroom with IOMMU using \qty{4}{\kibi\byte} and \qty{2}{\mebi\byte} pages on a 2MiB buffer, a performance difference of around 10\% can be observed. This stems from the aforementioned IOTLB-thrashing. Noticeable is that no performance impact can be seen when using a 4KiB buffer. This is because all pages can fit in the IOTLB.
+When comparing the performance of vroom without the IOMMU against vroom with IOMMU using \qty{4}{\kibi\byte} and \qty{2}{\mebi\byte} pages on a 2MiB buffer, a performance difference of around 10\% between \qty{4}{\kibi\byte} pages and \qty{2}{\mebi\byte} pages can be observed. This stems from the aforementioned IOTLB-thrashing. Noticeable is that no performance impact can be seen when using a 4KiB buffer, as all pages can fit into the IOTLB. The lines of both implementations using \qty{2}{\mebi\byte} pages overlap with both buffer sizes.
 
 \begin{figure}[H]
   \centering
@@ -125,16 +125,16 @@ For the following results, we will compare the latencies and throughput of vroom
 \subsection{Latencies}
 \begin{figure}[H]
   \centering
-  \subcaptionbox {Random read} {\includegraphics[width=.99\textwidth]{figures/lats_ccdf_2MiB_qd1t1_read} \label{fig:ccdf-read}}
-  \subcaptionbox {Random write} {\includegraphics[width=.99\textwidth]{figures/lats_ccdf_2MiB_qd1t1} \label{fig:ccdf-write}}
+  \subcaptionbox {Random read} {\includegraphics[width=.70\textwidth]{figures/lats_ccdf_2MiB_qd1t1_read} \label{fig:ccdf-read}}
+  \subcaptionbox {Random write} {\includegraphics[width=.70\textwidth]{figures/lats_ccdf_2MiB_qd1t1} \label{fig:ccdf-write}}
   \caption{Tail latencies on Intel System}
   \label{fig:ccdf}
 \end{figure}
 
 \begin{figure}[H]
   \centering
-  \subcaptionbox {Random read} {\includegraphics[width=.99\textwidth]{figures/lats_ccdf_2MiB_qd1t1_read_epyc} \label{fig:ccdf-read-epyc}}
-  \subcaptionbox {Random write} {\includegraphics[width=.99\textwidth]{figures/lats_ccdf_2MiB_qd1t1_epyc} \label{fig:ccdf-write-epyc}}
+  \subcaptionbox {Random read} {\includegraphics[width=.70\textwidth]{figures/lats_ccdf_2MiB_qd1t1_read_epyc} \label{fig:ccdf-read-epyc}}
+  \subcaptionbox {Random write} {\includegraphics[width=.70\textwidth]{figures/lats_ccdf_2MiB_qd1t1_epyc} \label{fig:ccdf-write-epyc}}
   \caption{Tail latencies on AMD System}
   \label{fig:ccdf-epyc}
 \end{figure}
@@ -151,7 +151,7 @@ All throughput tests are done with a \qty{1}{\gibi\byte} buffer in memory. For \
 \end{figure}
 
 
-We also take a look at throughput performance with larger queue depths. The queue depth describes how many outstanding requests are put onto a submission queue, leading to lower latencies. Again, the lines are mainly overlapping.
+We also take a look at throughput performance with larger queue depths. The queue depth describes how many outstanding requests are put onto a submission queue, leading to lower latencies. Again, the lines are mostly overlapping.
 
 \begin{figure}[H]
   \centering
@@ -161,13 +161,15 @@ We also take a look at throughput performance with larger queue depths. The queu
   \label{fig:qdnt1-2MiB}
 \end{figure}
 
-To stress test the IOMMU, we run vroom on 8 NVMe SSDs in parallel. Each thread has a \qty{1}{\gibi\byte} buffer in memory. We tested multiple NVMe configurations.
+To stress test the IOMMU, we run vroom on 8 NVMe SSDs in parallel. Each thread has a \qty{1}{\gibi\byte} buffer in memory. We tested multiple NVMe configurations. Again, no significant impact of the IOMMU occurs.
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=\textwidth]{figures/qdnt1_2MiB_8nvmes}
-  \caption{Throughput on 8 NVMe SSDs with 1 thread each}
-  \label{fig:8nvmes}
+  \subcaptionbox {Queue depth 1 and 1 thread\label{fig:throughput-qd1t1-8n}} {\includegraphics[width=.7\textwidth]{figures/throughput_bar_qd1t1_8nvmes} }
+  \subcaptionbox {Queue depth 32 and 4 threads\label{fig:throughput-qd32t4-8n}} {\includegraphics[width=.7\textwidth]{figures/throughput_bar_qd32t4_8nvmes} }
+  \subcaptionbox {Queue depth 128 and 16 threads\label{fig:throughput-qd128t16-8n}} {\includegraphics[width=.7\textwidth]{figures/throughput_bar_qd128t16_8nvmes} }
+  \caption{Throughput over 60s on 8 NVMe SSDs}
+  \label{fig:throughput-bar-8n}
 \end{figure}
 
 \section{IOMMU modes}
