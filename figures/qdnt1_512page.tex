@@ -44,7 +44,7 @@
             legend columns = 1,
         ]
 
-        % \addplot [mark=none,color=TUMBlue] table[col sep=comma,x=key,y expr=\thisrow{iops}/1000] {data/qdnt1-512page/qd1tn_2MiB_mmio.csv};
+        \addplot [mark=none,color=TUMBlue] table[col sep=comma,x=key,y expr=\thisrow{iops}/1000] {data/qdnt1-512page/qd1tn_2MiB_mmio.csv};
         \addplot [mark=none,color=TUMGreen] table[col sep=comma,x=key,y expr=\thisrow{iops}/1000.0] {data/qdnt1-512page/qd1tn_4KiB_vfio.csv};
         \addplot [mark=none,color=TUMPurple] table[col sep=comma,x=key,y expr=\thisrow{iops}/1000.0] {data/qdnt1-512page/qd1tn_2MiB_vfio.csv};
 

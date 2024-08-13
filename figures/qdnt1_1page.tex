@@ -33,6 +33,7 @@
             legend cell align={left},
         ]
 
+        \addplot [mark=none,color=TUMBlue] table[col sep=comma,x=key,y expr=\thisrow{iops}/1000] {data/qdnt1-1page/qd1tn_2MiB_mmio.csv};
         \addplot [mark=none,color=TUMGreen] table[col sep=comma,x=key,y expr=\thisrow{iops}/1000] {data/qdnt1-1page/qd1tn_4KiB_vfio.csv};
         \addplot [mark=none,color=TUMPurple] table[col sep=comma,x=key,y expr=\thisrow{iops}/1000] {data/qdnt1-1page/qd1tn_2MiB_vfio.csv};
 

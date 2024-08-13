@@ -161,7 +161,7 @@ We also take a look at throughput performance with larger queue depths. The queu
   \label{fig:qdnt1-2MiB}
 \end{figure}
 
-To stress test the IOMMU, we run vroom on 8 NVMe SSDs in parallel. Each thread has a \qty{1}{\gibi\byte} buffer in memory.
+To stress test the IOMMU, we run vroom on 8 NVMe SSDs in parallel. Each thread has a \qty{1}{\gibi\byte} buffer in memory. We tested QD1T1, QD32T4 and QD128T16.
 
 \begin{figure}[H]
   \centering
