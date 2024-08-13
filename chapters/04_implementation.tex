@@ -4,7 +4,13 @@ The VFIO implementation by Stefan Huber for Ixy.rs was used as a reference, but 
 
 % untangle this mess
 \section{Virtual Function I/O}
-Virtual Function I/O (VFIO) is an IOMMU agnostic framework for exposing devices to userspace. VFIO consists of two parts, the \texttt{vfio-pci} driver and an IOMMU API. The IOMMU API can either be the type1 IOMMU API for x86 architectures or the SPAPR IOMMU API for ppc64 architectures. We will only use the type1 IOMMU API. The VFIO PCI driver can be bound to a PCI device. This allows using \texttt{mmap(2)} to map the PCI device registers into memory. The type1 VFIO IOMMU API is used for mapping and unmapping address translations in the IOMMU. Alternatively, the IOMMUFD API can be used instead of the container API, which currently is not feature complete, but will eventually replace the container-based solution \cite{vfiokerneldocs}. The layers of VFIO can be seen on \autoref{fig:layer-vfio}. VFIO practically acts like the kernel module to userspace drivers, allowing unprivileged, regulated access to physical memory and device registers.
+Virtual Function I/O (VFIO) is an IOMMU agnostic framework for exposing devices to userspace.
+
+VFIO consists of two parts, the \texttt{vfio-pci} driver and an IOMMU API. The IOMMU API can either be the type1 IOMMU API for x86 architectures or the SPAPR IOMMU API for ppc64 architectures. We will only use the type1 IOMMU API.
+
+The VFIO PCI driver can be bound to a PCI device. This allows using \texttt{mmap(2)} to map the PCI device registers into memory. The type1 VFIO IOMMU API is used for mapping and unmapping address translations in the IOMMU. Alternatively, the IOMMUFD API can be used instead of the container API, which currently is not feature complete, but will eventually replace the container-based solution \cite{vfiokerneldocs}. The layers of VFIO can be seen on \autoref{fig:layer-vfio}.
+
+VFIO practically acts like the kernel module to userspace drivers, allowing unprivileged, regulated access to physical memory and device registers.
 
 To use vroom with the IOMMU we need to initialize the IOMMU, VFIO, DMA and the NVMe device:
 \begin{enumerate}

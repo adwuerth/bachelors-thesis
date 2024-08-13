@@ -1,5 +1,4 @@
 \chapter{Conclusion}
-\paragraph{IOMMU}
 In this thesis, we improved Vroom's safety by implementing IOMMU support and came to the same conclusion as SPDK. The complete code of the driver, including IOMMU support, can be found on GitHub \cite{vroomsource}.
 In our tests, we only saw a noticeable performance impact on the older and slower Intel Xeon CPU, which makes us conclude that the IOMMU performance is becoming less of a factor.
 We figured out the IOTLB size of two IOMMU models, which, given the right conditions, can introduce address translation overhead.

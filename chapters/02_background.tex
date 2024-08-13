@@ -9,9 +9,9 @@ As vroom does not have a kernel driver part, we unbind the kernel driver and bin
 
 \section{Memory Management Unit}
 % weird writing, not clear
-Memory Management Units (MMU) for the CPU have been used since the 1980s. After their first integrated application featuring on Intel's 80286 chip \cite{intel80286}, they have since become the de facto standard for addressing computer memory. By providing processes with a virtual address space instead of physical addresses, every process is isolated and prevented access to memory regions without permission. Each translated address points to a region of memory called a page. These pages can have different sizes, with the default being \qty{4}{\kibi\byte} pages on modern x86-64 architectures.
+Memory Management Units (MMU) for the CPU have been used since the 1980s. After their first integrated application featuring on Intel's 80286 chip \cite{intel80286}, they have since become the de facto standard for addressing computer memory. By providing processes with a virtual address space instead of physical addresses, every process is isolated and only has access to memory assigned to it virtual address space. Each translated address points to a region of memory called a page. These pages can have different sizes, with the default being \qty{4}{\kibi\byte} pages on modern x86-64 architectures.
 
-The translations of these pages are stored in a page table structure. A page table structure consists of multiple tables that store parts of the physical address. When an address is translated, a page table walk must be performed.  Thus, a page table walk is a performance-costly operation. To circumvent this, a Translation Lookaside Buffer (TLB) is used to cache translations.
+The translations of these pages are stored in so-called page tables. As one page table does not offer enough address space, multiple tables are linked together, consisting of pointers to a lower-level page table. Each table stores parts of the address, and the entry can be determined by using the offset. One page table walk thus includes fetching multiple tables from memory, resulting in a high latency. To circumvent this, a Translation Lookaside Buffer (TLB) is used to cache translations.
 
 The TLB is very performant to access. Frequent access to the same address can be done at a fraction of the time needed for a page table walk. A TLB miss describes the scenario in which a physical address needs to be translated, but it has no entry in the TLB, resulting in an expensive page walk.
 
@@ -88,16 +88,16 @@ Each device on the bus uses a PCIe configuration space, which includes registers
     \label{fig:pciconfig}
 \end{figure}
 
-% maybe remove 
-\section{Character and Block Devices}
-Unix/Linux uses two types of devices: Character and Block devices. Character devices are used for devices with small amounts of data and no frequent seek queries, like keyboard and mouse.
-Block devices typically have large data volumes and are organized in blocks, like HDDs and SSDs.
-Read and Write operations on character devices are done sequentially byte-by-byte, while on block devices, read/write is done at the data block level.
-These constraints also impact how the drivers for these devices work. CDev drivers directly communicate with the device drivers, while block device drivers work in conjunction with the kernel file management and block device subsystem. This allows efficient asynchronous read/write operations for large data amounts, but small byte-sized data transfer achieves lower latency on character devices.
+% % maybe remove 
+% \section{Character and Block Devices}
+% Unix/Linux uses two types of devices: Character and Block devices. Character devices are used for devices with small amounts of data and no frequent seek queries, like keyboard and mouse.
+% Block devices typically have large data volumes and are organized in blocks, like HDDs and SSDs.
+% Read and Write operations on character devices are done sequentially byte-by-byte, while on block devices, read/write is done at the data block level.
+% These constraints also impact how the drivers for these devices work. CDev drivers directly communicate with the device drivers, while block device drivers work in conjunction with the kernel file management and block device subsystem. This allows efficient asynchronous read/write operations for large data amounts, but small byte-sized data transfer achieves lower latency on character devices.
 
-% maybe remove 
-\section{Non-Uniform Memory Access}
-Non-Uniform Memory Access is a type of system architecture for multi-CPU systems. Hardware resources are bundled into "nodes". These nodes can contain multiple CPUs, memory, and I/O buses \cite{numakerneldocs}. This can relieve stress on the memory bus and improve performance if the memory is part of the same node as the CPU. On the other hand, performance may decrease if the memory is situated in another node. With \texttt{numactl}, it is possible to specify the locality of memory and CPU to run a process on one node \cite{numactlmanpage}.
+% % maybe remove 
+% \section{Non-Uniform Memory Access}
+% Non-Uniform Memory Access is a type of system architecture for multi-CPU systems. Hardware resources are bundled into "nodes". These nodes can contain multiple CPUs, memory, and I/O buses \cite{numakerneldocs}. This can relieve stress on the memory bus and improve performance if the memory is part of the same node as the CPU. On the other hand, performance may decrease if the memory is situated in another node. With \texttt{numactl}, it is possible to specify the locality of memory and CPU to run a process on one node \cite{numactlmanpage}.
 
 \section{Rust}
 While userspace drivers can theoretically and practically be written in any language, as proven by the network driver Ixy \cite{ixylanggithub}, Rust excels as it not only offers memory safety but memory safety without garbage collection. This is especially important, as garbage-collected languages have overhead and latency spikes, which can lower performance. Another critical factor is that, like C, Rust does not use exceptions. Being forced to handle errors ensures no rogue exception can take down critical code infrastructure.
