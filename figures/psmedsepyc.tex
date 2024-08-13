@@ -38,7 +38,7 @@
             % enlarge y limits = 0.1,
             every axis legend/.append style={nodes={right}},
             % legend entries={\texttt{io\_uring}, \texttt{libaio}, \texttt{psync}, vroom, SPDK},
-            legend entries={2M,  VFIO 4K, VFIO 2M, VFIO 1G},
+            legend entries={vroom 2MiB, vroom with IOMMU 4KiB, vroom with IOMMU 2MiB, vroom with IOMMU 1GiB},
             legend pos = north east,
             legend style={at={(0.01,0.98)}, anchor = north west},
             legend columns = 1,
@@ -46,10 +46,10 @@
 
 
 
-        \addplot [mark=none,color=TUMRed] table[col sep=comma,x=key,y=median] {data/psmedsepyc/psmeds_2MiB_mmio.csv};
-        \addplot [mark=none,color=TUMBlue] table[col sep=comma,x=key,y=median] {data/psmedsepyc/psmeds_4KiB_vfio.csv};
-        \addplot [mark=none,color=TUMGreen] table[col sep=comma,x=key,y=median] {data/psmedsepyc/psmeds_2MiB_vfio.csv};
-        \addplot [mark=none,color=TUMYellow] table[col sep=comma,x=key,y=median] {data/psmedsepyc/psmeds_1GiB_vfio.csv};
+        \addplot [mark=none,color=TUMBlue] table[col sep=comma,x=key,y=median] {data/psmedsepyc/psmeds_2MiB_mmio.csv};
+        \addplot [mark=none,color=TUMGreen] table[col sep=comma,x=key,y=median] {data/psmedsepyc/psmeds_4KiB_vfio.csv};
+        \addplot [mark=none,color=TUMPurple] table[col sep=comma,x=key,y=median] {data/psmedsepyc/psmeds_2MiB_vfio.csv};
+        \addplot [mark=none,color=TUMDarkYellow] table[col sep=comma,x=key,y=median] {data/psmedsepyc/psmeds_1GiB_vfio.csv};
 
     \end{axis}
 \end{tikzpicture}
