@@ -16,7 +16,7 @@
             xmin=1,xmax=64,
             xtick=data,
             xmode = log,
-            xlabel={Threads},
+            xlabel={Queue depth},
             xtick={1,2,4,8,16,32,64},
             xticklabels={1,2,4,8,16,32,64},
             ymin=0,ymax=950,
@@ -33,8 +33,8 @@
             legend cell align={left},
         ]
 
-        \addplot [mark=none,color=TUMRed] table[col sep=comma,x=key,y expr=\thisrow{iops}/1000] {data/qdnt1-1page/qd1tn_4KiB_vfio.csv};
-        \addplot [mark=none,color=TUMBlue] table[col sep=comma,x=key,y expr=\thisrow{iops}/1000] {data/qdnt1-1page/qd1tn_2MiB_vfio.csv};
+        \addplot [mark=none,color=TUMGreen] table[col sep=comma,x=key,y expr=\thisrow{iops}/1000] {data/qdnt1-1page/qd1tn_4KiB_vfio.csv};
+        \addplot [mark=none,color=TUMPurple] table[col sep=comma,x=key,y expr=\thisrow{iops}/1000] {data/qdnt1-1page/qd1tn_2MiB_vfio.csv};
 
     \end{axis}
 \end{tikzpicture}

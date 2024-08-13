@@ -78,7 +78,7 @@ We can access the device registers using the \texttt{VFIO\_DEVICE\_GET\_REGION\_
 We first need to enable DMA by setting a bit in the PCIe command register.
 Using \texttt{VFIO\_PCI\_CONFIG\_REGION\_INDEX} as the index, we can get the offset for the PCIe configuration space address 0x0. By adding the command register offset (0x4), we can read the 2-byte command register or the DMA bit and write the modified bytes back into the register.
 
-After this, we can map the NVMe BAR register to memory using the \texttt{VFIO\_PCI\_CONFIG\_REGION\_INDEX} index.
+After this, we can map the NVMe base address register to memory using the \texttt{VFIO\_PCI\_BAR0\_REGION\_INDEX} index.
 The offset and size can be directly passed into \texttt{mmap} to map the BAR0 register to memory.
 
 \begin{minipage}{.95\linewidth}
@@ -123,9 +123,10 @@ let ptr = mmap_unsafe!(
 \end{enumerate}
 
 \subsection{DMA (Un-)Mapping}\label{sec:dmamapping}
-A page size can be defined When allocating or opening a file with \texttt{mmap}. The \texttt{MAP\_HUGETLB} flag is used in conjunction with the \texttt{MAP\_HUGE\_2MB} and \texttt{MAP\_HUGE\_1GB} flags for 2MiB and 1 GiB pages. By default, \texttt{mmap} uses the default page size of 4KiB.
+A page size can be defined When allocating or opening a file with \texttt{mmap}. By default, \texttt{mmap} uses the default page size of 4KiB. To use hugepages, the \texttt{MAP\_HUGETLB} flag needs to be passed to \texttt{mmap}. The resulting pagesize depends on the default pagesize of the system but can be specified with either the \texttt{MAP\_HUGE\_2MB} or the \texttt{MAP\_HUGE\_1GB} flag.
 
-The main IOMMU work is done by then creating the map struct \texttt{vfio\_iommu\_type1\_dma\_map}. We set the DMA mapping to read and write, and provide the same IOVA as the Virtual address. By then passing it to an ioctl call with the according VFIO operation \texttt{VFIO\_IOMMU\_MAP\_DMA} we can create a mapping in the page tables of the IOMMU. This way, we can give the IOVA to the NVMe controller, which will be used to access the memory through the address translation of the IOMMU.
+Using the \texttt{vfio\_iommu\_type1\_dma\_map} with the VFIO operation \texttt{VFIO\_IOMMU\_MAP\_DMA}, we can create a mapping in the IOMMU page tables, making the memory accessible to the device via DMA. Here we can also specify an own IOVA. Conveniently, we can pass the memory address for the IOVA.
+
 
 \begin{lstlisting}[language=Rust,caption={Mapping memory for DMA}, label=lst:mapdma]
     let mut iommu_dma_map = vfio_iommu_type1_dma_map {
