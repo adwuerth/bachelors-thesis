@@ -21,7 +21,7 @@
             xlabel={Pages},
             xtick={16,32,64,128,256,512,1024, 2048},
             xticklabels={16,32,64,128,256,512,1024,2048},
-            ymin=6950,ymax=7200,
+            ymin=6950,ymax=7250,
             ylabel style={align=center},
             ylabel={Latency in ns},
             ymajorgrids=true,
@@ -43,6 +43,8 @@
             legend style={at={(0.01,0.98)}, anchor = north west},
             legend columns = 1,
         ]
+
+
 
         \addplot [mark=none,color=TUMRed] table[col sep=comma,x=key,y=median] {data/psmedsepyc/psmeds_2MiB_mmio.csv};
         \addplot [mark=none,color=TUMBlue] table[col sep=comma,x=key,y=median] {data/psmedsepyc/psmeds_4KiB_vfio.csv};

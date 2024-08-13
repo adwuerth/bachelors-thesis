@@ -1,0 +1,66 @@
+\documentclass[class=minimal,border=10pt]{standalone}
+\usepackage{tumcolor}
+
+\usepackage{pgfplots}
+\usepackage{pgfplotstable}
+\pgfplotsset{compat=newest}
+\usetikzlibrary{pgfplots.groupplots}
+\pgfplotsset{grid style={dotted}}
+\usetikzlibrary{plotmarks}
+\usetikzlibrary{patterns}
+
+\begin{document}
+\tikzset{every mark/.append style={scale=1.2}}
+\begin{tikzpicture}
+    \begin{axis}[
+            ybar,
+            yscale=0.5,
+            bar width=0.75cm,
+            width=\textwidth,
+            symbolic x coords={read,write},
+            % xmin=0, xmax=4,
+            % xtick={,test,ttest,teest}
+            xtick=data,
+            x tick label style={draw=none},
+            ymin=0,
+            ylabel style={align=center},
+            % ytick={100, 200, 300, 400, 500, 600},
+            ylabel={Throughput [KIOPS]},
+            ymajorgrids=true,
+            scale only axis,
+            nodes near coords,
+            nodes near coords align={vertical},
+            grid=major,
+            enlarge x limits=0.5,
+            legend columns=2,
+            legend pos = north west,
+            legend style = {at={(0.05,1.95)}, anchor = north west},
+            % y tick style={draw=none}
+            % enlarge x limits =0.2,
+        ]
+
+        \addplot [color=TUMBlue, fill=TUMBlue, thick] coordinates {
+                (read,14.5)
+                (write,137.2)
+            };
+
+        \addplot [color=TUMBlue, fill=TUMBlue, thick, pattern=north east lines, pattern color=TUMBlue] coordinates {
+                (read,14.5)
+                (write,137.5)
+            };
+
+
+        \addplot [color=TUMGreen, fill=TUMGreen, thick] coordinates {
+                (read,17.0)
+                (write,138.8)
+            };
+
+        \addplot [color=TUMGreen, fill=TUMGreen, thick, pattern=north east lines, pattern color=TUMGreen] coordinates {
+                (read,17.0)
+                (write,138.3)
+            };
+
+        \legend{vroom Intel System, + IOMMU, vroom AMD System, + IOMMU}
+    \end{axis}
+\end{tikzpicture}
+\end{document}

@@ -1,0 +1,65 @@
+\documentclass[class=minimal,border=10pt]{standalone}
+\usepackage{tumcolor}
+
+\usepackage{pgfplots}
+\usepackage{pgfplotstable}
+\pgfplotsset{compat=newest}
+\usetikzlibrary{pgfplots.groupplots}
+\pgfplotsset{grid style={dotted}}
+\usetikzlibrary{plotmarks}
+\usetikzlibrary{patterns}
+
+\begin{document}
+\tikzset{every mark/.append style={scale=1.2}}
+\begin{tikzpicture}
+    \begin{axis}[
+            ybar,
+            yscale=0.5,
+            bar width=0.75cm,
+            width=\textwidth,
+            symbolic x coords={read,write},
+            % xmin=0, xmax=4,
+            % xtick={,test,ttest,teest}
+            xtick=data,
+            x tick label style={draw=none},
+            ymin=0, ymax=1200,
+            ylabel style={align=center},
+            % ytick={100, 200, 300, 400, 500, 600},
+            ylabel={Throughput [KIOPS]},
+            ymajorgrids=true,
+            scale only axis,
+            nodes near coords,
+            nodes near coords align={vertical},
+            grid=major,
+            enlarge x limits=0.5,
+            legend columns=2,
+            legend pos = north west,
+            legend style = {at={(0.05,1.95)}, anchor = north west},
+            % y tick style={draw=none}
+            % enlarge x limits =0.2,
+        ]
+
+        \addplot [color=TUMBlue, fill=TUMBlue, thick] coordinates {
+                (read,434.3)
+                (write,606.8)
+            };
+
+        \addplot [color=TUMBlue, fill=TUMBlue, thick, pattern=north east lines, pattern color=TUMBlue] coordinates {
+                (read,438.4)
+                (write,608.4)
+            };
+
+        \addplot [color=TUMGreen, fill=TUMGreen, thick] coordinates {
+                (read,873.8)
+                (write,713.1)
+            };
+
+        \addplot [color=TUMGreen, fill=TUMGreen, thick, pattern=north east lines, pattern color=TUMGreen] coordinates {
+                (read,874.7)
+                (write,715.6)
+            };
+
+        \legend{vroom Intel System, + IOMMU, vroom AMD System, + IOMMU}
+    \end{axis}
+\end{tikzpicture}
+\end{document}
