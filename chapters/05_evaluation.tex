@@ -3,7 +3,7 @@ In this chapter, we analyse the performance impact of the IOMMU, directly compar
 
 \section{Setup}
 We use two systems two benchmark the driver's performance.
-Both systems run Ubuntu 23.10 with Linux kernel version 6.5.0-42 and are NUMA systems which 2 nodes each. We adhere to NUMA-locality.
+Both systems run Ubuntu 23.10 with Linux kernel version 6.5.0-42 and are NUMA systems with 2 nodes each. We adhere to NUMA-locality.
 
 \begin{table}[H]
   \centering
@@ -71,7 +71,6 @@ For the following results, we will compare the latencies and throughput of vroom
 
 \subsection{Latencies}
 
-
 \begin{figure}[H]
   \centering
   \subcaptionbox {Random read} {\includegraphics[width=.70\textwidth]{figures/lats_ccdf_2MiB_qd1t1_read} \label{fig:ccdf-read}}
@@ -109,22 +108,20 @@ We also take a look at throughput performance with larger queue depths. The queu
   \label{fig:qdnt1-2MiB}
 \end{figure}
 
-We can further push the throughput by using 8 NVMes in parallel. We tested multiple NVMe configurations. Again, no significant impact of the IOMMU occurs.
+We can further push the throughput by using 8 NVMes in parallel. We tested multiple NVMe configurations. Again, no significant impact of the IOMMU occurs. Each NVMe has a slightly higher throughtput than when tested alone.
 
 \begin{figure}[H]
   \centering
   \subcaptionbox {Queue depth 1 and 1 thread\label{fig:throughput-qd1t1-8n}} {\includegraphics[width=.7\textwidth]{figures/throughput_bar_qd1t1_8nvmes} }
   \subcaptionbox {Queue depth 32 and 4 threads\label{fig:throughput-qd32t4-8n}} {\includegraphics[width=.7\textwidth]{figures/throughput_bar_qd32t4_8nvmes} }
   \subcaptionbox {Queue depth 128 and 16 threads\label{fig:throughput-qd128t16-8n}} {\includegraphics[width=.7\textwidth]{figures/throughput_bar_qd128t16_8nvmes} }
-  \caption{Throughput over 60s on 8 NVMe SSDs}
+  \caption{Throughput over 60s on 8 NVMe SSDs on the AMD system}
   \label{fig:throughput-bar-8n}
 \end{figure}
 
 \section{Impact of \qty{4}{\kibi\byte} pages}
 \subsection{Throughput}
-As Linux as well as our IOMMUs supports \qty{4}{\kibi\byte}, \qty{2}{\mebi\byte} and \qty{1}{\gibi\byte} page sizes we will first test and analyse how it affects the latencies and overall performance. Especially using \qty{4}{\kibi\byte} pages, a performance impact should be noticeable. As we use a typical unit size of \qty{4}{\kibi\byte} using \qty{4}{\kibi\byte} pages should result in TLB-thrashing, and every operation in a page walk. To test this hypothesis, we focus on the Intel system and only write to the Turbowrite buffer of the Samsung Evo 970 Plus, to reach the maximum performance and lowest latencies.
-
-When comparing the performance of vroom without the IOMMU against vroom with IOMMU using \qty{4}{\kibi\byte} and \qty{2}{\mebi\byte} pages on a 2MiB buffer, a performance difference of around 10\% between \qty{4}{\kibi\byte} pages and \qty{2}{\mebi\byte} pages can be observed. This stems from the aforementioned IOTLB-thrashing. Noticeable is that no performance impact can be seen when using a 4KiB buffer, as all pages can fit into the IOTLB. The lines of both implementations using \qty{2}{\mebi\byte} pages overlap with both buffer sizes.
+As Linux as well as our IOMMUs supports \qty{4}{\kibi\byte}, \qty{2}{\mebi\byte} and \qty{1}{\gibi\byte} page sizes we will test and analyse how it affects the latencies and overall performance. Especially using \qty{4}{\kibi\byte} pages, a performance impact should be noticeable. As we use a typical unit size of \qty{4}{\kibi\byte} using \qty{4}{\kibi\byte} pages should result in TLB-thrashing, and every operation in a page walk. To test this hypothesis, we focus on the Intel system and only write to the Turbowrite buffer of the Samsung Evo 970 Plus, to reach the maximum performance and lowest latencies. We test this using an increasing number of threads in \autoref{fig:qd1tn_4kib} and an increasing queue depth in \autoref{fig:qdnt1-4kib}.
 
 \begin{figure}[H]
   \centering
@@ -134,18 +131,20 @@ When comparing the performance of vroom without the IOMMU against vroom with IOM
   \label{fig:qd1tn_4kib}
 \end{figure}
 
-\subsection{PCIe limitations}
-When testing increasing queue depth, as seen on \autoref{fig:qdnt1-4kib}, around a 10\% performance decrease can be seen using queue depth 4. Further increasing the queue depth leads to a decrease of this gap, with the throughput capping at around 890K IOPS.
-
-The Intel System SSD is mounted on a PCIe 3.0 4x width bus with a maximum payload of 256 bytes. This PCI bus has a maximum throughput of 3.938 GB/s. Using the SSD to its full capability, i.e. using random writes with high queue depths in the Turbowrite buffer, can result in the bus being the bottleneck. With the highest throughput measured being 890K IOPS with one I/O operation containing 4096 bytes of data, we achieve 3.64 GB/s. Including the headers for each TLP and submission- and completion queue entries, we achieve 3.908 GB/s. This roughly equates the PCIe bus limits and leads us to conclude, that the missing overhead of using \qty{4}{\kibi\byte} pages on high queue depths stems from this bottleneck.
+In \autoref{fig:qd1tn_4kib}, when comparing the performance of vroom without the IOMMU against vroom with IOMMU using \qty{4}{\kibi\byte} and \qty{2}{\mebi\byte} pages on a 2MiB buffer, a performance difference of around 10\% between \qty{4}{\kibi\byte} pages and \qty{2}{\mebi\byte} pages can be observed. This stems from the aforementioned IOTLB-thrashing. Noticeable is that no performance impact can be seen when using a 4KiB buffer, as all pages can fit into the IOTLB. The lines of both implementations using \qty{2}{\mebi\byte} pages overlap with both buffer sizes.
 
 \begin{figure}[H]
   \centering
-  \subcaptionbox {1 \qty{4}{\kibi\byte} buffer per thread} {\includegraphics[width=0.48\textwidth]{figures/qdnt1_1page}}
-  \subcaptionbox {1 \qty{2}{\mebi\byte} buffer per thread} {\includegraphics[width=0.48\textwidth]{figures/qdnt1_512page}}
+  \subcaptionbox {1 \qty{4}{\kibi\byte} buffer per thread} {\includegraphics[width=0.75\textwidth]{figures/qdnt1_1page}}
+  \subcaptionbox {1 \qty{2}{\mebi\byte} buffer per thread} {\includegraphics[width=0.75\textwidth]{figures/qdnt1_512page}}
   \caption{Singlethreaded random write throughput over 20s with increasing queue depth on the Intel system}
   \label{fig:qdnt1-4kib}
 \end{figure}
+
+In \autoref{fig:qdnt1-4kib}, a 10\% performance decrease can be seen at queue depth 4. This difference grows smaller as we further increase the queue depth, though. At 16 or more queue depth the throughput caps at around 890KIOPS, and no more substantial difference between the implementations can be measured. As we have seen a constant decrease of 10\% in performance when testing multiple threads in \autoref{fig:qdnt1-4kib}, we suspect that the PCIe bus is the bottleneck and limiting the performance.
+
+\paragraph{PCIe limitations}
+The Intel System SSD is mounted on a PCIe 3.0 4x width bus with a maximum payload of 256 bytes. This PCI bus has a maximum throughput of 3.938 GB/s. Using the SSD to its full capability, i.e. using random writes with high queue depths in the Turbowrite buffer, can result in the bus being the bottleneck. With the highest throughput measured being 890K IOPS with one I/O operation containing 4096 bytes of data, we achieve 3.64 GB/s. Including the headers for each TLP and submission- and completion queue entries, we come to a result of 3.908 GB/s. This roughly equates the PCIe bus limits and leads us to conclude, that the missing overhead of using \qty{4}{\kibi\byte} pages on high queue depths stems from this bottleneck.
 
 \subsection{Determining IOTLB size}
 As the size of the IOTLB is not stated in hardware and VT-d or AMD-V specifications, we use a latency test to analyze the behaviour of the IOMMU.
@@ -172,12 +171,3 @@ On the AMD IOMMU, we can see a performance spike that occurs at 64-128 pages for
   \caption{Latencies of random writes on an emptied SSD with increasing host memory pages on the AMD system}
   \label{fig:med-psepyc}
 \end{figure}
-
-% \section{IOMMU modes}
-% There are a couple of kernel parameters that can be set at boot-time to influence the behaviour of the IOMMU. The availability is influenced by the iommu manufacturer, e.g. theres \texttt{amd\_iommu} and \texttt{intel\_iommu}, as well as the CPU architecture. Many of these manufacturer dependent options are either very specific, or shared behaviour is ported to the general iommu parameter, e.g. \texttt{amd\_iommu=fullflush} and \texttt{intel\_iommu=strict}. We will be mainly looking at the general options \texttt{iommu}.
-
-% \paragraph{Strict}
-% To enable strict IOMMU mode, \texttt{iommu.strict=1} has to be set. Using strict mode, unmapping operation cause a complete IOTLB invalidation. Using relaxed mode, unmapping operations can be deferred and batched. This increases performance as an invalidation completely clears the IOTLB buffer, but reduces device isolation.
-
-% \paragraph{Passthrough}
-% Passthrough mode can be enabled using \texttt{iommu.passthrough=1}. Using passthrough DMA operations bypass the translation of the IOMMU, and instead directly access physical memory.

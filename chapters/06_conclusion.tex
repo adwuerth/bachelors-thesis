@@ -4,7 +4,7 @@ As part of our implementation, we support using legacy VFIO and IOMMUFD as the V
 
 Our findings include the IOTLB size of two IOMMU models from Intel and AMD, which, when exceeded, can introduce address translation overhead for \qty{4}{\kibi\byte} pages.
 When not exceeding the IOTLB, or using hugepages, the IOMMU performs extremely well, and no overhead can be measured.
-The advantages of using the IOMMU, such as access rights and bigger address spaces, as well as the ability to run the driver without root privileges with VFIO, make it the preferred method of addressing memory.
+The advantages of using the IOMMU, such as access rights and bigger address spaces, as well as the ability to run the driver without root privileges with VFIO, make it the preferred method for NVMe I/O operations.
 % Considering that IOMMU technology has seen a rise in popularity in the use of hardware passthrough for virtualization, it is likely that in the future, the IOMMU performance and the IOTLB size will increase, further closing any existing gap. The ability to improve security drastically and increase address space while not compromising on performance is the reason the MMU succeeded, and it is likely that the IOMMU will as well.
 
 \paragraph{Rust in driver development}
