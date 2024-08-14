@@ -1,8 +1,7 @@
 \chapter{Conclusion}
-In this thesis, we improved Vroom's safety by implementing IOMMU support.
-% In our tests, we only saw a noticeable performance impact on the older and slower Intel Xeon CPU, which makes us conclude that the IOMMU performance is becoming less of a factor.
+In this thesis, we improved vroom's safety by implementing IOMMU support, by using the Linux framework VFIO.
 We figured out the IOTLB size of two IOMMU models, which, when exceeded, can introduce address translation overhead for \qty{4}{\kibi\byte} pages.
-When not exceeding the IOTLB, or using hugepages,
+When not exceeding the IOTLB, or using hugepages, the IOMMU performs extremely well, and practically no overhead can be seen.
 The advantages of using the IOMMU, such as access rights and bigger address spaces, as well as the ability to run the driver without root privileges with VFIO, make it the preferred method of addressing memory.
 Considering that IOMMU technology has seen a rise in popularity in the use of hardware passthrough for virtualization, it is likely that in the future, the IOMMU performance and the IOTLB size will increase, further closing any existing gap. The ability to improve security drastically and increase address space while not compromising on performance is the reason the MMU succeeded, and it is likely that the IOMMU will as well.
 

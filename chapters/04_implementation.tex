@@ -4,7 +4,7 @@ The VFIO implementation by Stefan Huber for Ixy.rs was used as a reference but c
 
 % untangle this mess
 \section{Virtual Function I/O}
-Virtual Function I/O (VFIO) is an IOMMU agnostic framework for exposing devices to userspace. VFIO acts like the kernel module to userspace drivers, allowing unprivileged, regulated access to physical memory and device registers. For our application, we will be looking at the device API and the backend. With the introduction of IOMMUFD, the native backend of VFIO is considered to be the "legacy" backend. Legacy VFIO uses the type1 IOMMU API for x86 architectures or the SPAPR IOMMU API for ppc64 architectures. We will only use the type1 IOMMU API. The \texttt{vfio-pci} driver (device API) is used for interaction with the device, i.e., reading, writing, and mapping the device registers. When VFIO is used with IOMMUFD, only the backend gets replaced, as IOMMUFD still relies on device API to access device registers.
+Virtual Function I/O (VFIO) is an IOMMU agnostic framework for exposing devices to userspace. VFIO acts like the kernel module to userspace drivers, allowing unprivileged, regulated access to physical memory and device registers. For our application, we will be looking at the device API and the backend. With the introduction of IOMMUFD, the native backend of VFIO is considered to be the "legacy" backend. Legacy VFIO uses the type1 IOMMU API for x86 architectures or the SPAPR IOMMU API for ppc64 architectures. We will only use the type1 IOMMU API. The \texttt{vfio-pci} driver (device API) is used for interaction with the device, i.e., reading, writing, and mapping the device registers. When VFIO is used with IOMMUFD, only the backend gets replaced, as IOMMUFD still relies on device API to access device registers. We will first focus on the implementation of legacy VFIO, and then compare it to the implementation of IOMMUFD.
 The layers of VFIO with both backends can be seen on \autoref{fig:layer}.
 
 To use vroom with the IOMMU, we need to initialize the IOMMU, VFIO, DMA, and the NVMe device:
@@ -22,18 +22,18 @@ The operation IDs used for VFIO are defined as constants or enums in the \texttt
 Many \texttt{ioctl} calls used for VFIO also take in a mutable reference to a struct, which is used for specific input and output. These structs are also defined in \texttt{vfio.h} and can be ported over to Rust using the \texttt{\#[repr(C)]} attribute, which ensures the same struct alignment as in C.
 
 % needs more elaboration
-We implement the struct \texttt{Vfio} and the enum \texttt{VfioIommu}.
+To model the IOMMU we implement the struct \texttt{Vfio} and the enum \texttt{VfioBackend}. As we have shared functionality between legacy VFIO and IOMMUFD, the enum \texttt{VfioBackend} takes care of the specialized behaviour, i.e., managing the IOVAs.
 
 \begin{lstlisting}[language=Rust,caption={Structs used to model VFIO}, label=lst:vfiostructs]
     pub struct Vfio {
         pci_addr: String,
         device_fd: RawFd,
         page_size: Pagesize,
-        iommu: VfioIommu,
-    }
+        iommu: VfioBackend,
+    } 
 
-    enum VfioIommu {
-        Container {
+    enum VfioBackend {
+        Legacy {
             container_fd: RawFd,
         },
         IOMMUFD {
@@ -42,6 +42,18 @@ We implement the struct \texttt{Vfio} and the enum \texttt{VfioIommu}.
         },
     }
 \end{lstlisting}
+
+% To model the shared behaviour between using physical addresses and VFIO, we implement the trait Mapping, as seen on \autoref{lst:traitmapping}. This enables us to modularly use either approach.
+
+% \begin{lstlisting}[language=Rust,caption={Structs used to model VFIO}, label=lst:traitmapping]
+%     pub trait Mapping {
+%         fn allocate<T>(&self, size: usize) -> Result<Dma<T>>;
+
+%         fn deallocate<T>(&self, dma: &Dma<T>) -> Result<()>;
+
+%         fn map_resource(&self) -> Result<(*mut u8, usize)>;
+%     } 
+% \end{lstlisting}
 
 \subsection{Groups and Containers}
 VFIO works with groups and containers. Each group can contain one or multiple devices. As many devices use DMA between each other, a single IOMMU group has to be created, as these devices cannot function in an isolated environment. The other way round can also be the case, with one device exposing two interfaces, which get their own group each. Therefore, groups are the smallest unit of granularity able to function. While groups are supposed to provide the highest amount of isolation, the need for shared memory between devices often exists. This need can be solved by using containers. Containers consist of one or more groups. The groups in one container share the same I/O virtual address space created by the IOMMU, allowing both to access the same memory.
@@ -66,13 +78,17 @@ To initialize the IOMMU, we first need to get the container file descriptor. The
 Excluding the Status and Info calls, the functionality consists of initializing the IOMMU for the device groups by setting the container on the groups, enabling Type1 for the IOMMU, and fetching the device file descriptor. With the device file descriptor, we gain access to the device regions through the VFIO device API, allowing us to access the device registers.
 
 \subsection{Device register access}\label{sec:pcieconfig}
-We can access the device registers using the \texttt{VFIO\_DEVICE\_GET\_REGION\_INFO} \texttt{ioctl} operation on the device fd. This operation requires the struct \texttt{vfio\_region\_info} as the third parameter, which needs to be initialized with a given index from \texttt{vfio.h}. After performing the syscall, the other fields, e.g., size or offset, can be used to read/write or map device registers.
+Previously, device access was done through the \texttt{sysfs} (pseudo-)filesystem. \texttt{sysfs} exposes the device registers under the path \texttt{/sys/bus/pci/devices/\$PCI\_ADDRESS/}. As seen in \autoref{fig:pciconfig}, we need to access the command register and the NVMe BAR0 register. In \texttt{sysfs} these are the \texttt{config} and \texttt{resource0} files. The \texttt{config} file points to the address 0x0 of the PCI configuration space. By adding the command register offset (0x4), we can access the command register. Using the offset 0x2, we can set the bit for bus mastering, allowing the device to perform DMA and disable interrupts by setting the bit at offset 0x4 at the \texttt{INTERRUPT\_DISABLE} flag.
+To map the BAR0 register to memory, we can use \texttt{mmap} with a file descriptor to \texttt{resource0}.
 
-We first need to enable DMA by setting a bit in the PCIe command register.
-Using \texttt{VFIO\_PCI\_CONFIG\_REGION\_INDEX} as the index, we can get the offset for the PCIe configuration space address 0x0. By adding the command register offset (0x4), we can read the 2-byte command register or the DMA bit and write the modified bytes back into the register.
+To do the same using VFIO, we use the VFIO device API.
+We can access the device registers using the \texttt{VFIO\_DEVICE\_GET\_REGION\_INFO} \texttt{ioctl} operation on the device fd. This operation requires the struct \texttt{vfio\_region\_info} as the third parameter, which needs to be initialized with a given index from \texttt{vfio.h}.
+These indizes are similar to the files in sysfs. We use the indizes \texttt{VFIO\_PCI\_CONFIG\_REGION\_INDEX} and \texttt{VFIO\_PCI\_BAR0\_REGION\_INDEX} to access the config and BAR register respectively. The struct is used as a input/output struct. After
+After performing the syscall, the other fields are set, e.g., size or offset, and can be used to read/write or memory map device registers.
 
+Using \texttt{VFIO\_PCI\_CONFIG\_REGION\_INDEX} as the index, we again get the PCIe configuration space address 0x0. By adding the command register offset, we can read the 2-byte command register or the DMA bit and write the modified bytes back into the register.
 After this, we can map the NVMe base address register to memory using the \texttt{VFIO\_PCI\_BAR0\_REGION\_INDEX} index.
-The offset and size can be directly passed into \texttt{mmap} to map the BAR0 register to memory.
+The offset and size can be directly passed into \texttt{mmap} to map the BAR0 register to memory, as seen on \autoref{lst:bar0map}.
 
 \begin{minipage}{.95\linewidth}
     \begin{lstlisting}[language=Rust,caption={Mapping the BAR0 NVMe register to memory}, label=lst:bar0map]
@@ -104,22 +120,11 @@ let ptr = mmap_unsafe!(
 \end{lstlisting}
 \end{minipage}
 
-\subsection{NVMe initialization}\label{sec:nvmeinit}
-
-% more elaboration
-
-\begin{enumerate}
-    \item Allocate Admin SQ, CQ and I/O SQ, CQ
-    \item Create a mapping on the IOMMU using VFIO
-    \item Configure the NVMe device
-    \item Pass I/O Queue addresses to NVMe device using admin queues
-\end{enumerate}
-
 \subsection{DMA (Un-)Mapping}\label{sec:dmamapping}
-A page size can be defined When allocating or opening a file with \texttt{mmap}. By default, \texttt{mmap} uses the default page size of 4KiB. To use hugepages, the \texttt{MAP\_HUGETLB} flag needs to be passed to \texttt{mmap}. The resulting pagesize depends on the default pagesize of the system but can be specified with either the \texttt{MAP\_HUGE\_2MB} or the \texttt{MAP\_HUGE\_1GB} flag.
+When using physical addresses for DMA, a number of steps have to be performed to ensure that the page is not moved. Firstly, hugepages have to be used, as the kernel cannot move these. Additionally the allocated memory is locked using \texttt{mlock} to lock the page. Thus, a hugepage file is created in the directory where hugetlbfs is mounted, in our case \texttt{/mnt/huge}. By then using \texttt{mmap} with the file descriptor and then locking it, we can create a statically mapped page in memory. To get the physical address for DMA, the address translation entry in the MMU needs to be fetched from \texttt{/proc/self/pagemap}. As \texttt{mmap} uses \qty{4}{\kibi\byte} by default, we have to specify the use of hugepages with the \texttt{MAP\_HUGETLB} flag. The resulting pagesize depends on the default hugepage size of the system but can be specified with either the \texttt{MAP\_HUGE\_2MB} or the \texttt{MAP\_HUGE\_1GB} flag.
 
-Using the \texttt{vfio\_iommu\_type1\_dma\_map} with the VFIO operation \texttt{VFIO\_IOMMU\_MAP\_DMA}, we can create a mapping in the IOMMU page tables, making the memory accessible to the device via DMA. Here we can also specify an own IOVA. Conveniently, we can pass the memory address for the IOVA.
-
+As seen in \autoref{lst:mapdma}, VFIO greatly simplifies this, as using IOVAs alleviates the need for ensuring the physical address does not change. This is handled by VFIO. Firstly, we can either either allocate or map a file to the process virtual space using \texttt{mmap}. As we do not have the restriction of using hugepages, we can also perform the mapping using the default \qty{4}{\kibi\byte} pagesize.
+To get the IOVA for a corresponding page in memory, we need to use the \texttt{vfio\_iommu\_type1\_dma\_map} struct with the VFIO operation \texttt{VFIO\_IOMMU\_MAP\_DMA}. To correctly map an address, we need to specify the address mapping in the struct. \texttt{vaddr} is the address in the process virtual address space, i.e., the address returned by \texttt{mmap}. By setting the field \texttt{iova}, we can conveniently use the same address for the IOVA. If we would not do this, the IOVAs would have to be managed manually, e.g., to avoid mapping to an address twice. Finally, the size has to be specified, which is the same as the length passed to \texttt{mmap}. In the \texttt{flags} field, we can specify if the memory is accessible with read and/or write. By default, we simply set both. This IOVA can then be used just like the physical address by the NVMe controller.
 
 \begin{lstlisting}[language=Rust,caption={Mapping memory for DMA}, label=lst:mapdma]
     let mut iommu_dma_map = vfio_iommu_type1_dma_map {
@@ -144,27 +149,29 @@ Using the \texttt{vfio\_iommu\_type1\_dma\_map} with the VFIO operation \texttt{
 \paragraph{Unmapping DMA}
 Unmapping DMA happens when the process exits, yet for performance and application reasons, we implement the \texttt{unmap\_dma} function to remove a DMA mapping from the IOMMU. Using the \texttt{VFIO\_IOMMU\_UNMAP\_DMA} \texttt{ioctl} operation, we can unmap the memory and finally free it using \texttt{munmap}.
 
-\newpage
+
+\subsection{NVMe initialization}\label{sec:nvmeinit}
+Using the mapped NVMe BAR and the ability to create DMA mappings, we can now initialize the NVMe controller. Mainly this consists of allocating the queues, and mapping them to be accessed by the NVMe controller through DMA. The IOVAs of the admin queues can be written to the mapped BAR, where also additional configuration, like enabling the controller, setting queue entry sizes happens. Through the mapped BAR, we can set the admin queue addresses and additional configuration like, e.g, setting queue entry sizes. Using the admin queues, an I/O queue pair can be created. The driver is ready to operate and perform I/O operations.
 
 \subsection{I/O operations with VFIO}
 After initialization, the NVMe is ready to use. A sequential, single-threaded I/O operation is shown in \autoref{fig:vroom-graph}.
-\begin{figure}
+\begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth]{figures/vroomdiagram.pdf}
     \caption{I/O operation using vroom with enabled IOMMU}
     \label{fig:vroom-graph}
 \end{figure}
-The sequence of events are as followed:
+The sequence of events in \autoref{fig:vroom-graph} are as followed:
 \begin{enumerate}
     \item \textbf{I/O function call:} The application calls a read/write method on vroom
-    \item \textbf{Command Submission:} Vroom creates a \texttt{NvmeCommand} struct and places it on the Submission Queue head.
-    \item \textbf{Ring SQ Doorbell:} Vroom places the submission queue head address in the doorbell register. The doorbell register is part of the NVMe BAR region, which is mapped to memory.
+    \item \textbf{Command Submission:} vroom creates a \texttt{NvmeCommand} struct and places it on the Submission Queue head.
+    \item \textbf{Ring SQ Doorbell:} vroom places the submission queue head address in the doorbell register. The doorbell register is part of the NVMe BAR region, which is mapped to memory.
     \item \textbf{Take Command:} The NVMe takes the command from the SQ.
     \item \textbf{Perform I/O:} The NVMe uses the IOMMU to access the host memory via DMA and performs the read/write command.
     \item \textbf{Complete I/O:} The NVMe places a \texttt{NvmeCompletion} struct instance on the head of the Completion Queue.
     \item \textbf{Polled CQ:} By polling the CQ, vroom can process the CQ entry.
     \item \textbf{Ring CQ Doorbell:} After processing the CQ entry, vroom rings the CQ Doorbell to notify the NVMe controller that the Completion Queue has been processed.
-    \item \textbf{Notify Application:} Vroom notifies the Application of the success of the I/O operation. The application can continue running.
+    \item \textbf{Notify Application:} vroom notifies the Application of the success of the I/O operation. The application can continue running.
 \end{enumerate}
 
 \section{IOMMUFD}

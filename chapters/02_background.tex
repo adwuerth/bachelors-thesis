@@ -1,7 +1,7 @@
 \chapter{Background}
 
 \section{vroom}
-Vroom is a userspace NVMe driver written in Rust. As of this writing, it offers high performance and the functionality required for general I/O operations, but it is not yet production-ready. Unlike interrupt-driven drivers, vroom uses polling to determine the state of the I/O operations. Polling is often preferable in high-performance applications, as interrupts are relatively performance-intensive operations \cite{spdksubmitting}.
+vroom is a userspace NVMe driver written in Rust. As of this writing, it offers high performance and the functionality required for general I/O operations, but it is not yet production-ready. Unlike interrupt-driven drivers, vroom uses polling to determine the state of the I/O operations. Polling is often preferable in high-performance applications, as interrupts are relatively performance-intensive operations \cite{spdksubmitting}.
 When using vroom without the IOMMU, the BAR of the NVMe is exposed in the pseudo-filesystem \texttt{sysfs} e.g., for the device with PCI address \texttt{0000:01:00.0} under the path \texttt{/sys/bus/PCI/devices/0000:01:00.0/resource0}. Direct memory access is performed using physical addresses on hugepages.
 
 An NVMe driver consists of submission and completion queues implemented as ring buffers. The driver adds commands to the submission queue, which the NVMe controller reads and executes. The executed command gets placed on a corresponding completion queue. A deeper explanation of the steps will be provided in \autoref{c:impl}.
@@ -32,26 +32,12 @@ The IOMMU, like the MMU has a TLB, which is called the I/O Translation Lookaside
 
 The IOMMU paging structures of Intel's VT-d consist of \qty{4}{\kibi\byte} page tables storing 512 8-byte entries. The IOMMU uses the upper portions to determine the location of the stored page tables and the lower portion of the address as page offset. In the case of \qty{4}{\kibi\byte} pages its 12 bits, for \qty{2}{\mebi\byte} its 21.
 
-
-% todo maybe add amd-v figure
-
-% \begin{figure}[H]
-%     \centering
-%     \subcaptionbox {Translation of a \qty{4}{\kibi\byte} page} {\includegraphics[width=0.9\textwidth]{figures/4kibtranslation.pdf}\label{fig:pagewalk4kib}}
-%     \subcaptionbox {Translation of a \qty{2}{\mebi\byte} page} {\includegraphics[width=0.9\textwidth]{figures/2mibtranslation.pdf}\label{fig:pagewalk2mib}}
-%     \caption{Intel VT-d Paging structure for translating a 48-bit address to a \qty{4}{\kibi\byte} and a \qty{2}{\mebi\byte} page, grabbed from \cite{vtdspec}}
-%     \label{fig:pagewalk}
-% \end{figure}
-
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.9\textwidth]{figures/4kibtranslation.pdf}
     \caption{Intel VT-d Paging structure for translating a 48-bit address to a \qty{4}{\kibi\byte} page, grabbed from \cite{vtdspec}}
     \label{fig:pagewalk}
 \end{figure}
-
-% \section{Memory Mapped I/O}
-% Memory Mapped I/O, in contrast to Port-Mapped I/O, places devices in the same address space as the main memory. Instead of using Assembly instructions like \texttt{in} or \texttt{out}, a device can be addressed just like the RAM can be. Addressing this memory itself can currently be done in two ways. Either accessing it with the physical address or using a hardware translation device like the I/O Memory Management Unit (IOMMU). Before our implementation, vroom only supported the former.
 
 \section{Direct Memory Access}
 Using Direct Memory Access, we can bypass the CPU for I/O operations. Previously, this was handled by a separate DMA-controller hardware (third-party DMA), but using PCI, we can directly access it through bus mastering (first-party DMA) \cite{maellmann}. Using the IOMMU, the request is intercepted and translated to the physical address.
@@ -66,7 +52,7 @@ In the optimal case, using a \qty{2}{\mebi\byte} or \qty{1}{\gibi\byte} page siz
     \item \textbf{Transparent Hugepages}: Transparent Hugepages are a more recent addition to the kernel. Transparent hugepages are not fixed or reserved in the kernel and allow all unused memory to be used for other purposes. THPs provide a way of utilizing the TLB effectively without reserving vast amounts of memory. The \texttt{khugepaged} daemon scans memory and collapses sequences of basic pages into bigger pages. THPs can either be enabled, disabled, or only be used on \texttt{madvise(MADV\_HUGEPAGE)} memory regions \cite{transhugekerneldocs}.
 \end{itemize}
 
-Vroom currently uses hugepages for DMA and locks them with the Linux syscall \texttt{mlock} to prevent the kernel from swapping them out. This does not ensure that the kernel can not migrate the page to another physical location. This is the reason why persistent Hugepages have to be used. The kernel cannot move these pages like \qty{4}{\kibi\byte} pages. Other userspace drivers like SPDK or DPDK also rely on this to perform DMA without the IOMMU.
+vroom currently uses hugepages for DMA and locks them with the Linux syscall \texttt{mlock} to prevent the kernel from swapping them out. This does not ensure that the kernel can not migrate the page to another physical location. This is the reason why persistent Hugepages have to be used. The kernel cannot move these pages like \qty{4}{\kibi\byte} pages. Other userspace drivers like SPDK or DPDK also rely on this to perform DMA without the IOMMU.
 
 \section{Peripheral Component Interconnect Express}
 PCIe is a standard for peripheral device buses. Each device on the PCI bus has a unique PCI address, segmented into three parts, as seen in \autoref{fig:pciaddress}. The maximum data payload size of PCIe is \qty{4}{\kibi\byte}.
@@ -78,7 +64,7 @@ PCIe is a standard for peripheral device buses. Each device on the PCI bus has a
     \label{fig:pciaddress}
 \end{figure}
 
-Each device on the bus uses a PCIe configuration space, which includes registers for controlling the device's behavior, e.g., enabling DMA in the command register. It also includes Base Address Registers (BAR), which are used to access the device's actual controller. The configuration space can be seen on \autoref{fig:pciconfig}. The marked fields are needed for Vroom.
+Each device on the bus uses a PCIe configuration space, which includes registers for controlling the device's behavior, e.g., enabling DMA in the command register. It also includes Base Address Registers (BAR), which are used to access the device's actual controller. The configuration space can be seen on \autoref{fig:pciconfig}. The marked fields are needed for vroom.
 
 \begin{figure}[H]
     \centering
