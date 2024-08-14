@@ -1,10 +1,14 @@
 \chapter{Implementation} \label{c:impl}
 
-The VFIO implementation by Stefan Huber for Ixy.rs was used as a reference but changed to fit the project structure and use case. The implementation for IOMMU support includes the initialization of the IOMMU, the steps needed to create mappings to the I/O Virtual Address space and the access to the device registers. The complete code of the driver, including IOMMU support, can be found on GitHub \cite{vroomsource}.
+The VFIO implementation by Stefan Huber for Ixy.rs was used as a reference but changed to fit the project structure and use case. The implementation for IOMMU support includes the initialization of the IOMMU, the steps needed to create mappings to the I/O virtual address space and the access to the device registers. The complete code of the driver, including IOMMU support, can be found on GitHub \cite{vroomsource}.
 
 % untangle this mess
 \section{Virtual Function I/O}
-Virtual Function I/O (VFIO) is an IOMMU agnostic framework for exposing devices to userspace. VFIO acts like the kernel module to userspace drivers, allowing unprivileged, regulated access to physical memory and device registers. For our application, we will be looking at the device API and the backend. With the introduction of IOMMUFD, the native backend of VFIO is considered to be the "legacy" backend. Legacy VFIO uses the type1 IOMMU API for x86 architectures or the SPAPR IOMMU API for ppc64 architectures. We will only use the type1 IOMMU API. The \texttt{vfio-pci} driver (device API) is used for interaction with the device, i.e., reading, writing, and mapping the device registers. When VFIO is used with IOMMUFD, only the backend gets replaced, as IOMMUFD still relies on device API to access device registers. We will first focus on the implementation of legacy VFIO, and then compare it to the implementation of IOMMUFD.
+Virtual Function I/O (VFIO) is an IOMMU agnostic framework for exposing devices to userspace. VFIO acts like the kernel module to userspace drivers, allowing unprivileged, regulated access to physical memory and device registers.
+
+As seen on \autoref{fig:layer-vfio}, VFIO consists of an IOMMU API for management of IOMMU mappings (VFIO backend) and a device API for device access, which uses the backend to perform the access. With the new introduction of IOMMUFD, the native backend of VFIO is considered to be the "legacy" backend. Legacy VFIO uses the type1 IOMMU API for x86 architectures or the SPAPR IOMMU API for ppc64 architectures. As our implementation is for x86, we will equate legacy VFIO with the type1 API.
+
+The \texttt{vfio-pci} driver (device API) is used for interaction with the device, i.e., reading, writing, and mapping the device registers. When VFIO is used with IOMMUFD, only the backend gets replaced, as IOMMUFD still relies on device API to access device registers. We will first focus on the implementation of legacy VFIO, and then compare it to the implementation of IOMMUFD.
 The layers of VFIO with both backends can be seen on \autoref{fig:layer}.
 
 To use vroom with the IOMMU, we need to initialize the IOMMU, VFIO, DMA, and the NVMe device:
@@ -21,10 +25,11 @@ Interaction with the VFIO interface works using \texttt{ioctl} system calls.
 The operation IDs used for VFIO are defined as constants or enums in the \texttt{vfio.h} header file in the Linux kernel. To use these constants in Rust, the constants need to either be defined manually or with a crate like bindgen, which automates bindings for C and C++ libraries \cite{cratebindgen}. We chose the manual implementation to keep the binary and dependency list as small as possible.
 Many \texttt{ioctl} calls used for VFIO also take in a mutable reference to a struct, which is used for specific input and output. These structs are also defined in \texttt{vfio.h} and can be ported over to Rust using the \texttt{\#[repr(C)]} attribute, which ensures the same struct alignment as in C.
 
-% needs more elaboration
-To model the IOMMU we implement the struct \texttt{Vfio} and the enum \texttt{VfioBackend}. As we have shared functionality between legacy VFIO and IOMMUFD, the enum \texttt{VfioBackend} takes care of the specialized behaviour, i.e., managing the IOVAs.
+To model the IOMMU we implement the struct \texttt{Vfio} and the enum \texttt{VfioBackend}, as seen in \autoref{lst:vfiostructs}.
+The shared functionality, e.g., accessing the device registers, is implemented on the struct \texttt{Vfio}, while the enum \texttt{VfioBackend} takes care of the backend-specific behaviour, i.e., mapping DMA addresses.
 
-\begin{lstlisting}[language=Rust,caption={Structs used to model VFIO}, label=lst:vfiostructs]
+\begin{minipage}{.95\linewidth}
+    \begin{lstlisting}[language=Rust,caption={Structs used to model VFIO}, label=lst:vfiostructs]
     pub struct Vfio {
         pci_addr: String,
         device_fd: RawFd,
@@ -42,6 +47,7 @@ To model the IOMMU we implement the struct \texttt{Vfio} and the enum \texttt{Vf
         },
     }
 \end{lstlisting}
+\end{minipage}
 
 % To model the shared behaviour between using physical addresses and VFIO, we implement the trait Mapping, as seen on \autoref{lst:traitmapping}. This enables us to modularly use either approach.
 
@@ -103,7 +109,7 @@ let mut region_info = vfio_region_info {
 
 ioctl_unsafe!(
     self.device_fd,
-    IoctlOperation::VFIO_DEVICE_GET_REGION_INFO,
+    IoctlOp::VFIO_DEVICE_GET_REGION_INFO,
     &mut region_info
 )?;
 
@@ -126,7 +132,8 @@ When using physical addresses for DMA, a number of steps have to be performed to
 As seen in \autoref{lst:mapdma}, VFIO greatly simplifies this, as using IOVAs alleviates the need for ensuring the physical address does not change. This is handled by VFIO. Firstly, we can either either allocate or map a file to the process virtual space using \texttt{mmap}. As we do not have the restriction of using hugepages, we can also perform the mapping using the default \qty{4}{\kibi\byte} pagesize.
 To get the IOVA for a corresponding page in memory, we need to use the \texttt{vfio\_iommu\_type1\_dma\_map} struct with the VFIO operation \texttt{VFIO\_IOMMU\_MAP\_DMA}. To correctly map an address, we need to specify the address mapping in the struct. \texttt{vaddr} is the address in the process virtual address space, i.e., the address returned by \texttt{mmap}. By setting the field \texttt{iova}, we can conveniently use the same address for the IOVA. If we would not do this, the IOVAs would have to be managed manually, e.g., to avoid mapping to an address twice. Finally, the size has to be specified, which is the same as the length passed to \texttt{mmap}. In the \texttt{flags} field, we can specify if the memory is accessible with read and/or write. By default, we simply set both. This IOVA can then be used just like the physical address by the NVMe controller.
 
-\begin{lstlisting}[language=Rust,caption={Mapping memory for DMA}, label=lst:mapdma]
+\begin{minipage}{.95\linewidth}
+    \begin{lstlisting}[language=Rust,caption={Mapping memory for DMA}, label=lst:mapdma]
     let mut iommu_dma_map = vfio_iommu_type1_dma_map {
         argsz: mem::size_of::<vfio_iommu_type1_dma_map>() as u32,
         flags: IoctlFlag::VFIO_DMA_MAP_FLAG_READ 
@@ -138,12 +145,13 @@ To get the IOVA for a corresponding page in memory, we need to use the \texttt{v
 
     ioctl_unsafe!(
         *container_fd,
-        IoctlOperation::VFIO_IOMMU_MAP_DMA,
+        IoctlOp::VFIO_IOMMU_MAP_DMA,
         &mut iommu_dma_map
     )?;
 
     let iova = iommu_dma_map.iova as usize; 
 \end{lstlisting}
+\end{minipage}
 
 % improve writing
 \paragraph{Unmapping DMA}
@@ -178,11 +186,11 @@ The sequence of events in \autoref{fig:vroom-graph} are as followed:
 The IOMMU File Descriptor user API (IOMMUFD) offers a way of controlling the IOMMU subsystem using file descriptors in user-space \cite{iommufdkerneldocs}. IOMMUFD offers a more granular managing of the IOMMU, using devices instead of groups. Additionally, it supports a more user-friendly interface, allowing the user to modify IOAS easily. Although IOMMUFD could potentially be used as a standalone to provide simple IOAS management functionality like mapping or unmapping, e.g., the device registers still need to be accessed through the \texttt{vfio-pci} driver. Thus, IOMMUFD is used in conjunction with VFIO, replacing its backend, i.e. the interaction with the IOMMU.
 IOMMUFD has only been recently added to the Linux Kernel in December 2022. E.g. Debian 12 does not include it, Fedora 40 does, but it is not enabled in the kernel configuration. Considering that it is not widely available or enabled on many distributions, our driver offers both options of using the IOMMU.
 Instead of using containers or groups, IOMMUFD uses so-called I/O address spaces (IOAS) and character device file descriptors. Just like containers, IOAS can be used to provide shared memory mappings for multiple devices. The implementation of IOMMUFD is similar to VFIO, but there are some key differences.
+As with VFIO, to interact with IOMMUFD, we use the syscall \texttt{ioctl}. The needed bindings, flags and operations are defined in the Linux kernel under the path \texttt{include/uapi/linux/iommufd.h}. Again, we manually port the needed structs and constants to Rust.
 
 The first change is the acquisition of the group/device and the container/iommu fd.
 In VFIO, a container can be created using the file \texttt{/dev/vfio/vfio}. For IOMMUFD, first the iommu fd needs to be acquired from \texttt{/dev/iommu}. By then using the \texttt{IOMMU\_IOAS\_ALLOC} \texttt{ioctl}, a new IOAS can be allocated.
 The device file descriptor, which was previously attained with \texttt{VFIO\_GROUP\_GET\_DEVICE\_FD} with the group can now be obtained through opening the character device \texttt{/dev/vfio/devices/vfioX} \cite{vfiokerneldocs}. In order to use the device with VFIO, it still has to be bound to IOMMUFD, using \texttt{VFIO\_DEVICE\_BIND\_IOMMUFD}.
-
 
 The IOAS can then be assigned to the device by using \texttt{VFIO\_DEVICE\_ATTACH\_IOMMUFD\_PT}. As with containers, this operation can be performed on multiple devices for a shared IOAS. The equivalent in VFIO is \texttt{VFIO\_GROUP\_SET\_CONTAINER}.
 
@@ -202,7 +210,7 @@ As for (un-)mapping DMA, the \texttt{IOMMU\_IOAS\_MAP} and \texttt{IOMMU\_IOAS\_
     \centering
     \subcaptionbox {VFIO with Containers \label{fig:layer-vfio}} {\includegraphics[width=0.67\textwidth]{figures/VFIOLayer.pdf}}
     \subcaptionbox {VFIO with IOMMUFD (IOAS) \label{fig:layer-iommufd}} {\includegraphics[width=0.67\textwidth]{figures/IOMMUFDLayer.pdf}}
-    \caption{Layer diagrams of VFIO with VFIO Container API and IOMMUFD, partly adopted from \cite{dpdkiommufd}}
+    \caption{Layer diagrams of VFIO with VFIO Container API and IOMMUFD, adapted from \cite{dpdkiommufd}}
     \label{fig:layer}
 \end{figure}
 
