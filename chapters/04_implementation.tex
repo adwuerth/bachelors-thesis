@@ -4,15 +4,8 @@ The VFIO implementation by Stefan Huber for Ixy.rs was used as a reference but c
 
 % untangle this mess
 \section{Virtual Function I/O}
-Virtual Function I/O (VFIO) is an IOMMU agnostic framework for exposing devices to userspace.
-
-VFIO consists of the \texttt{vfio-pci} driver and an IOMMU API. The IOMMU API can be the type1 IOMMU API for x86 architectures or the SPAPR IOMMU API for ppc64 architectures. We will only use the type1 IOMMU API.
-
-The \texttt{vfio-pci} is used for interaction with the device, i.e., reading, writing, and mapping the device registers. The IOMMU API, on the other hand, handles the memory mapping for DMA in the IOMMU.
-
-The VFIO PCI driver can be bound to a PCI device. Alternatively, the IOMMUFD API can be used instead of the container API, which currently is not feature-complete but will eventually replace the container-based solution \cite{vfiokerneldocs}. The layers of VFIO can be seen on \autoref{fig:layer-vfio}.
-
-VFIO acts like the kernel module to userspace drivers, allowing unprivileged, regulated access to physical memory and device registers.
+Virtual Function I/O (VFIO) is an IOMMU agnostic framework for exposing devices to userspace. VFIO acts like the kernel module to userspace drivers, allowing unprivileged, regulated access to physical memory and device registers. For our application, we will be looking at the device API and the backend. With the introduction of IOMMUFD, the native backend of VFIO is considered to be the "legacy" backend. Legacy VFIO uses the type1 IOMMU API for x86 architectures or the SPAPR IOMMU API for ppc64 architectures. We will only use the type1 IOMMU API. The \texttt{vfio-pci} driver (device API) is used for interaction with the device, i.e., reading, writing, and mapping the device registers. When VFIO is used with IOMMUFD, only the backend gets replaced, as IOMMUFD still relies on device API to access device registers.
+The layers of VFIO with both backends can be seen on \autoref{fig:layer}.
 
 To use vroom with the IOMMU, we need to initialize the IOMMU, VFIO, DMA, and the NVMe device:
 \begin{enumerate}
