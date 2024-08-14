@@ -64,13 +64,13 @@ Despite the NVMe specifications maximum capability of 65536 I/O queues, our SSDs
 We use 1 thread per 1 I/O queue in our multithreaded tests. Turbowrite is a Samsung technology that drastically speeds up write latencies in the so-called "Turbowrite" buffer with the size of \qty{42}{\giga\byte} of the NVMe, as shown in \cite{vroom}.
 The NVMe SSDs are formatted to 512-byte blocksize. All writes are performed on an empty SSD to avoid any overhead through garbage collection on the NVMe. As the NVMe can optimize reads on an empty SSD, all reads will be performed on a full SSD. The tests mainly use random writes/reads, as the NVMe can drastically optimize sequential requests, which can lead to altered results.
 Unless stated otherwise, we configure the submission and completion queue length to the maximum amount.
-Additionally, all standard tests are run with the \texttt{iommu.strict=1} kernel parameter. When this parameter is set, the IOMMU invalidates the complete IOTLB on unmapping. As we unmap IOVAs inbetween tests, this ensures that for each test the IOTLB is flushed.
+Additionally, all standard tests are run with the \texttt{iommu.strict=1} kernel parameter. When this parameter is set, the IOMMU invalidates the complete IOTLB when an unmapping happens. As we unmap IOVAs inbetween tests, this ensures that for each test the IOTLB is flushed.
 
 \section{Results}
 For the following results, we will compare the latencies and throughput of vroom without the IOMMU and with the IOMMU, both utilizing \qty{2}{\mebi\byte} pages. All latency and throughput tests are run with a \qty{1}{\gibi\byte} buffer in memory. For \qty{2}{\mebi\byte} pages this equates to 512 pages being accessed.
 
 \subsection{Latencies}
-All latency tests are run over 60s on a \qty{1}{\gibi\byte}
+
 
 \begin{figure}[H]
   \centering
