@@ -99,7 +99,7 @@ To test the overall throughput we perform random reads/writes over 60 seconds on
   \centering
   \subcaptionbox {Queue depth 1 and 1 thread} {\includegraphics[width=.9\textwidth]{figures/throughput_bar_qd1t1} \label{fig:throughput-qd1t1}}
   \subcaptionbox {Queue depth 32 and 4 threads} {\includegraphics[width=.9\textwidth]{figures/throughput_bar_qd32t4} \label{fig:throughput-qd32t4}}
-  \caption{Throughput over 60s}
+  \caption{Throughput of singlethreaded and multithreaded I/O over 60s}
   \label{fig:throughput-bar}
 \end{figure}
 
@@ -109,7 +109,7 @@ We also take a look at throughput performance with larger queue depths. The perf
   \centering
   \subcaptionbox {Intel System} {\includegraphics[width=.8\textwidth]{figures/qdnt1_2MiB} \label{fig:qdnt1-2MiB-intel}}
   \subcaptionbox {AMD System} {\includegraphics[width=.8\textwidth]{figures/qdnt1_2MiB_epyc} \label{fig:qdnt1-2MiB-epyc}}
-  \caption{Throughput over 60s of random writes with increasing Queue Depth}
+  \caption{Random write throughput with increasing Queue Depth over 60s}
   \label{fig:qdnt1-2MiB}
 \end{figure}
 
@@ -132,7 +132,7 @@ As Linux, as well as our IOMMUs, support \qty{4}{\kibi\byte}, \qty{2}{\mebi\byte
   \centering
   \subcaptionbox {1 \qty{4}{\kibi\byte} buffer per thread} {\includegraphics[width=0.6\textwidth]{figures/qd1tn_1page}}
   \subcaptionbox {1 \qty{2}{\mebi\byte} buffer per thread} {\includegraphics[width=0.6\textwidth]{figures/qd1tn_512page}}
-  \caption{QD1 random write throughput over 20s with increasing thread count on the Intel system}
+  \caption{Random write throughput over 20s with increasing thread count and queue depth 1 on the Intel system}
   \label{fig:qd1tn-4kib}
 \end{figure}
 
@@ -161,7 +161,7 @@ The test is performed with VFIO with \qty{4}{\kibi\byte}, \qty{2}{\mebi\byte} an
 \begin{figure}[H]
   \centering
   \includegraphics[width=\textwidth]{figures/psmeds}
-  \caption{Latencies of random writes on an emptied SSD with increasing host memory pages on the Intel system}
+  \caption{Latencies of random writes on an emptied SSD with increasing pages in memory on the Intel system}
   \label{fig:med-ps}
 \end{figure}
 
@@ -171,7 +171,7 @@ In the resulting graph \autoref{fig:med-ps} we can observe a performance spike o
 \begin{figure}[H]
   \centering
   \includegraphics[width=\textwidth]{figures/psmedsepyc}
-  \caption{Latencies of random writes on an emptied SSD with increasing host memory pages on the AMD system}
+  \caption{Latencies of random writes on an emptied SSD with increasing pages in memory on the AMD system}
   \label{fig:med-psepyc}
 \end{figure}
 
