@@ -1,15 +1,12 @@
 \chapter{Conclusion}
-In this thesis, we investigated the effects of using VFIO, or more generally, the IOMMU on the userspace NVMe driver vroom.
-As part of our implementation, we support using legacy VFIO and IOMMUFD as the VFIO backend.
+In this thesis, we investigated the effects of using Linux VFIO for userspace I/O. As part of our implementation, we added support for the IOMMU in the userspace NVMe driver vroom. We tested the performance and discussed the security benefits of VFIO. Additionally, we implemented the new IOMMUFD user API and compared it to legacy VFIO.
 
-Our findings include the IOTLB size of two IOMMU models from Intel and AMD, which, when exceeded, can introduce address translation overhead for \qty{4}{\kibi\byte} pages.
-When not exceeding the IOTLB, or using hugepages, the IOMMU performs extremely well, and no overhead can be measured.
-The advantages of using the IOMMU, such as access rights and bigger address spaces, as well as the ability to run the driver without root privileges with VFIO, make it the preferred method for NVMe I/O operations.
-% Considering that IOMMU technology has seen a rise in popularity in the use of hardware passthrough for virtualization, it is likely that in the future, the IOMMU performance and the IOTLB size will increase, further closing any existing gap. The ability to improve security drastically and increase address space while not compromising on performance is the reason the MMU succeeded, and it is likely that the IOMMU will as well.
+Our findings include the IOTLB size of two IOMMU models by Intel and AMD, which, when exceeded, can introduce address translation overhead for \qty{4}{\kibi\byte} pages, reaching up to a 10\% decrease in throughput.
+When not exceeding the IOTLB or using hugepages, the IOMMU performs exceptionally well, and we could not measure any overhead versus using physical addresses.
+As the IOMMU provides bigger address spaces, access rights enforcement, and the ability for the driver to run without root privileges, it is a clear improvement for driver security and versatility.
 
-\paragraph{Rust in driver development}
-The viability of using Rust to develop drivers has been shown often, and it has proved that a modern, memory-safe language like Rust can compete with C in systems development. Using Rust provides more safety and a modern ecosystem, a package manager, and zero-cost abstractions. This makes Rust an excellent choice for driver development.
+Considering that in recent years, IOMMU technology has seen a rise in popularity in the use of hardware passthrough for virtualization, it is likely that in the future, the IOMMU performance and the IOTLB size will increase, further closing any existing gap. The ability to improve security drastically and increase address space while not compromising on performance is the reason the MMU succeeded, and it is likely that the IOMMU will as well.
 
 \paragraph{Future Work}
-Future Work on the driver could include expanding the NVMe capabilities. Currently, the driver is fixed to one namespace. Furthermore, the driver does not support a block device layer or file system.
-Also, it could be investigated if and how many threads could operate on one I/O queue to further push the throughput. Finally, a performance investigation into IOMMUFD could be conducted, as we only tested the legacy VFIO implementation.
+Future Work on the driver could include expanding the NVMe capabilities. Currently, the driver is fixed to one namespace. Furthermore, the driver does not support a block device layer or file system. Exploring these areas could enhance the functionality and versatility of the driver.
+Also, it could be investigated if and how many threads could operate on one I/O queue to further push the throughput. Finally, a performance investigation into IOMMUFD could be conducted, as we only tested the legacy VFIO implementation's performance.

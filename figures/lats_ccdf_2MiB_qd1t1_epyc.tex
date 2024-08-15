@@ -57,13 +57,13 @@
             legend columns = 1,
         ]
 
-        \addplot [mark=+,color=TUMBlue, thick,mark repeat*=20] table[col sep=comma,x=latency,y expr=1-\thisrow{cdf}] {data/lats_ccdf_2MiB_epyc/lats_qd1t1_2MiB_mmio_1Gbuf_write.csv};
-        \addplot [mark=none,color=TUMGreen, thick] table[col sep=comma,x=latency,y expr=1-\thisrow{cdf}] {data/lats_ccdf_2MiB_epyc/lats_qd1t1_2MiB_vfio_1Gbuf.csv};
+        \addplot [mark=triangle*,color=TUMBlue, thick,mark repeat*=400] table[col sep=comma,x=latency,y expr=1-\thisrow{cdf}] {data/lats_ccdf_2MiB_epyc/lats_qd1t1_2MiB_mmio_1Gbuf_write.csv};
+        \addplot [mark=square*,color=TUMPurple, thick,mark repeat*=600] table[col sep=comma,x=latency,y expr=1-\thisrow{cdf}] {data/lats_ccdf_2MiB_epyc/lats_qd1t1_2MiB_vfio_1Gbuf.csv};
 
-        \addplot[mark=none,color=black!60,forget plot,dashed,thick] coordinates {
-                (0,0.1)
-                (250,0.1)
-            };
+        % \addplot[mark=none,color=black!60,forget plot,dashed,thick] coordinates {
+        %         (0,0.1)
+        %         (250,0.1)
+        %     };
         \addplot[mark=none,color=black!60,forget plot,dashed,thick] coordinates {
                 (0,0.01)
                 (250,0.01)
@@ -72,10 +72,10 @@
                 (0,0.0001)
                 (250,0.0001)
             };
-        \addplot[mark=none,color=black!60,forget plot,dashed,thick] coordinates {
-                (0,0.00001)
-                (250,0.00001)
-            };
+        % \addplot[mark=none,color=black!60,forget plot,dashed,thick] coordinates {
+        %         (0,0.00001)
+        %         (250,0.00001)
+        %     };
         \begin{pgfonlayer}{axis foreground}
             \node[anchor = north east,yshift=0.25em] at (axis cs: 75.5,0.1) { 90th percentile};
             \node[anchor = north east,yshift=0.25em] at (axis cs: 75.5,0.01) { 99th percentile};
