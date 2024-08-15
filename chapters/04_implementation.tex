@@ -1,6 +1,6 @@
 \chapter{Implementation} \label{c:impl}
 
-The VFIO implementation of Ixy.rs was used as a reference but was massively changed to fit the project structure and use case. The implementation for IOMMU support includes the initialization of the IOMMU, the steps needed to create mappings to the I/O virtual address space, and the access to the device registers. The complete code of the driver can be found on GitHub \cite{vroomsource}.
+The VFIO implementation of Ixy.rs \cite{ixy.rs} was used as a reference but was massively changed to fit the project structure and use case. The implementation for IOMMU support includes the initialization of the IOMMU, the steps needed to create mappings to the I/O virtual address space, and the access to the device registers. The complete code of the driver can be found on GitHub \cite{vroomsource}.
 
 \section{Virtual Function I/O}
 Virtual Function I/O (VFIO) is an IOMMU agnostic framework for exposing devices to userspace. VFIO acts like the kernel module to userspace drivers, allowing unprivileged, regulated access to physical memory and device registers.
