@@ -77,7 +77,7 @@ To map the BAR0 register to memory, we can use \texttt{mmap} with a file descrip
 
 To do the same using VFIO, we use the VFIO device API.
 We can access the device registers using the \texttt{VFIO\_DEVICE\_GET\_REGION\_INFO} \texttt{ioctl} operation on the device fd. This operation requires the struct \texttt{vfio\_region\_info} as the third parameter, which needs to be initialized with a given index from \texttt{vfio.h}.
-We use the indices \texttt{VFIO\_PCI\_CONFIG\_REGION\_INDEX} and \texttt{VFIO\_PCI\_BAR0\_REGION\_INDEX} to access the config and BAR register respectively. The struct is used as an input/output struct. After
+We use the indices \texttt{VFIO\_PCI\_CONFIG\_REGION\_INDEX} and \texttt{VFIO\_PCI\_BAR0\_REGION\_INDEX} to access the config and BAR register respectively. The struct is used as an input/output struct.
 After performing the syscall, the other fields are set, e.g., size or offset, and can be used to read/write or memory map device registers.
 
 Using \texttt{VFIO\_PCI\_CONFIG\_REGION\_INDEX} as the index, we again get the PCIe configuration space address 0x0. By adding the command register offset, we can set the bus mastering bit to enable DMA.

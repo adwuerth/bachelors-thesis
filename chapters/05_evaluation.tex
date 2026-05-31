@@ -69,7 +69,7 @@ Unless stated otherwise, we configure the submission and completion queue length
 Additionally, all standard tests are run with the \texttt{iommu.strict=1} kernel parameter. When this parameter is set, the IOMMU invalidates the complete IOTLB when an unmapping occurs. As we unmap IOVAs in between tests, this ensures that the IOTLB is flushed before each test.
 
 \section{Results}
-For the following performance tests, we will compare the latencies and throughput of vroom without the IOMMU and with the IOMMU, both utilizing \qty{2}{\mebi\byte} pages. All latency and throughput tests are run with a \qty{1}{\gibi\byte} buffer in memory. For \qty{2}{\mebi\byte} pages, this equates to 512 pages being accessed. We use a unit size of \qty{4}{\kibi\byte}, i.e., each I/O operation reads/writes \qty{4}{\kibi\byte} to the the NVMe.
+For the following performance tests, we will compare the latencies and throughput of vroom without the IOMMU and with the IOMMU, both utilizing \qty{2}{\mebi\byte} pages. All latency and throughput tests are run with a \qty{1}{\gibi\byte} buffer in memory. For \qty{2}{\mebi\byte} pages, this equates to 512 pages being accessed. We use a unit size of \qty{4}{\kibi\byte}, i.e., each I/O operation reads/writes \qty{4}{\kibi\byte} to the NVMe.
 
 \subsection{Latencies}
 All latency performance measurements are done singlethreaded with queue depth 1 over a timespan of 60 seconds.
@@ -177,4 +177,4 @@ In the resulting graph \autoref{fig:med-ps} we can observe a performance spike o
 
 \paragraph{Results of AMD EPYC 7713}
 On the AMD IOMMU, we can see three performance spikes. Each occurs between 32-64 pages for \qty{1}{\gibi\byte} pages, 64-128 pages for \qty{2}{\mebi\byte}, and 256-512 for \qty{4}{\kibi\byte} pages.
-We can therefore assume that the IOTLB size depends on the pagesize unlike on the Intel CPU. This leads us to suspect an \textbf{IOTLB size of 32 for \qty{1}{\gibi\byte} pages, 64 for \qty{2}{\mebi\byte} pages and 256 for \qty{4}{\kibi\byte} pages}. The latencies only decrease by about \qty{60}{ns}, which is a about four times less than page walks on the Intel system.
+We can therefore assume that the IOTLB size depends on the pagesize unlike on the Intel CPU. This leads us to suspect an \textbf{IOTLB size of 32 for \qty{1}{\gibi\byte} pages, 64 for \qty{2}{\mebi\byte} pages and 256 for \qty{4}{\kibi\byte} pages}. The latencies only decrease by about \qty{60}{ns}, which is about four times less than page walks on the Intel system.
